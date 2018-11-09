@@ -5,11 +5,15 @@ name = "pypi"
 
 [packages]
 pypacker = "*"
+pypcapkit = "*"
 
 [dev-packages]
-"pep8" = "*"
-pylint = "*"
+ipython = "*"
+rope = "*"
 "autopep8" = "*"
+pylint = "*"
+pycodestyle = "*"
+isort = {extras = ["pipfile", "requirements"], version = "*"}
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

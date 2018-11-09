@@ -7,5 +7,6 @@
         "pypacker"
     ],
     "python.formatting.autopep8Path": "/Users/jarryshaw/.local/share/virtualenvs/FTProxy-8yoelX7l/bin/autopep8",
-    "python.linting.pep8Path": "/Users/jarryshaw/.local/share/virtualenvs/FTProxy-8yoelX7l/bin/pep8"
+    "python.linting.pep8Path": "/Users/jarryshaw/.local/share/virtualenvs/FTProxy-8yoelX7l/bin/pep8",
+    "python.linting.pylintEnabled": true
 }

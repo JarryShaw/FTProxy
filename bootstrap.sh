@@ -18,7 +18,6 @@ sudo --set-home python3 -m pip install --upgrade \
     pipenv
 
 # prepare Pipenv
-cd ~/Desktop
-git clone https://github.com/JarryShaw/FTProxy.git
-cd ./FTProxy
+git clone https://github.com/JarryShaw/FTProxy.git ~/Desktop
+cd ~/Desktop/FTProxy
 pipenv install
