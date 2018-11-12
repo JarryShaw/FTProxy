@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ext.frame import Frame     # pylint: disable=E0401
-from ext.header import Header   # pylint: disable=E0401
+from ftcap.ext.frame import Frame
+from ftcap.ext.header import Header
 
 __all__ = ['reader']
 

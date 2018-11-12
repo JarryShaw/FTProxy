@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from cst.frame import Frame     # pylint: disable=E0401
-from cst.header import Header   # pylint: disable=E0401
+from ftcap.cst.frame import Frame
+from ftcap.cst.header import Header
 
 __all__ = ['writer']
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .reader import reader
-from .writer import writer
+from ftcap.reader import reader
+from ftcap.writer import writer
 
 __all__ = ['reader', 'writer']
