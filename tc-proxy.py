@@ -19,6 +19,7 @@ clientBlackList = []
 serverBlackList = []
 SO_ORIGINAL_DST = 80
 LOCK = None
+MAX_LENGTH = 4096
 
 
 def LoadClientBlackList(file):
@@ -66,13 +67,12 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
             dataPool['PASV'][socketKey].append([timestamp, None])
         else:
             dataPool['PASV'][socketKey] = [[timestamp, None]]
-            print(dataPool)
+        print(dict(dataPool['PASV']))
         if socketKey in dataPool['ACTV']:
             dataPool['ACTV'][socketKey].append([timestamp, None])
         else:
             dataPool['ACTV'][socketKey] = [[timestamp, None]]
-            print(dataPool)
-        print(dataPool)
+        print(dict(dataPool['ACTV']))
         TCP_Control_Trans(localConn, remoteConn, socketKey, socketPort, timestamp, dataPool)
         localConn.close()
         remoteConn.close()
@@ -103,6 +103,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
             time.sleep(0.01)
 
     # Other Data Transfer
+    print("This is not a FTP connection.")
     Other_Data_Trans(localConn, remoteConn)
     localConn.close()
     remoteConn.close()
@@ -116,7 +117,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
     while True:
         rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
-            recvData = clifd.recv(1024)
+            recvData = clifd.recv(MAX_LENGTH)
             if recvData[:4] == b'PORT':
                 _, _, _, _, e, f = recvData[4:].split(b',')
                 e, f = int(e.strip()), int(f.strip())
@@ -148,9 +149,9 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                         break
             if recvData:
                 servfd.sendall(recvData)
-                #writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+                writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if servfd in rfd:
-            recvData = servfd.recv(1024)
+            recvData = servfd.recv(MAX_LENGTH)
             if recvData[:3] == b'227':
                 _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 e, f = int(e.strip()), int(f.strip())
@@ -178,7 +179,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                         break
             if recvData:
                 clifd.sendall(recvData)
-                #writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
+                writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
 def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
@@ -187,15 +188,15 @@ def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
     while True:
         rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
-            recvData = clifd.recv(1024)
+            recvData = clifd.recv(MAX_LENGTH)
             if recvData:
                 servfd.sendall(recvData)
-                #writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+                writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if servfd in rfd:
-            recvData = servfd.recv(1024)
+            recvData = servfd.recv(MAX_LENGTH)
             if recvData:
                 clifd.sendall(recvData)
-                #writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
+                writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
 def Other_Data_Trans(clifd, servfd):
@@ -203,11 +204,11 @@ def Other_Data_Trans(clifd, servfd):
     while True:
         rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
-            recvData = clifd.recv(1024)
+            recvData = clifd.recv(MAX_LENGTH)
             if recvData:
                 servfd.sendall(recvData)
         if servfd in rfd:
-            recvData = servfd.recv(1024)
+            recvData = servfd.recv(MAX_LENGTH)
             if recvData:
                 clifd.sendall(recvData)
 
