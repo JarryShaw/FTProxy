@@ -269,9 +269,9 @@ def main():
     manager = multiprocessing.Manager()
     global LOCK
     LOCK = multiprocessing.Lock()
-    dataPool = manager.dict()
-    dataPool['PASV'] = {}
-    dataPool['ACTV'] = {}
+    dataPool = dict()
+    dataPool['PASV'] = manager.dict()
+    dataPool['ACTV'] = manager.dict()
     tcpSocket = tcp_listen(port)
     print(f'listening on {sys.argv[2]}')
     try:
