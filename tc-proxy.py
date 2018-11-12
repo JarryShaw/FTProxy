@@ -66,10 +66,12 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
             dataPool['PASV'][socketKey].append([timestamp, None])
         else:
             dataPool['PASV'][socketKey] = [[timestamp, None]]
+            print(dataPool)
         if socketKey in dataPool['ACTV']:
             dataPool['ACTV'][socketKey].append([timestamp, None])
         else:
             dataPool['ACTV'][socketKey] = [[timestamp, None]]
+            print(dataPool)
         print(dataPool)
         TCP_Control_Trans(localConn, remoteConn, socketKey, socketPort, timestamp, dataPool)
         localConn.close()
