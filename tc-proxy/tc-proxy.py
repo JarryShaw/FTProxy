@@ -11,6 +11,8 @@ import struct
 import sys
 import time
 import traceback
+import re
+import ftcap
 
 clientBlackList = []
 serverBlackList = []
@@ -100,10 +102,22 @@ def TCP_Control_Trans(clifd, servfd, socketKey, timestamp, dataPool):
                 servfd.sendall(recvData)
         if servfd in rfd:
             recvData = servfd.recv(1024)
-            if b'227 Entering Passive Mode' in recvData:
-                _, _, _, _, e, f = recvData[27:-4].split(b',')
-                e, f = eval(e), eval(f)
+            if recvData[:3] == b'227':
+                _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
+                e, f = int(e.strip()), int(f.strip())
                 dataPort = e * 256 + f
+                for j in dataPool[socketKey]:
+                    if j[0] == timestamp:
+                        j[1] = dataPort
+            elif recvData[:3] == b'228':
+                _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
+                dataPort = int(port.strip())
+                for j in dataPool[socketKey]:
+                    if j[0] == timestamp:
+                        j[1] = dataPort
+            elif recvData[:3] == b'229':
+                port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
+                dataPort = int(port)
                 for j in dataPool[socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
