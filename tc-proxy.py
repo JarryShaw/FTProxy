@@ -81,7 +81,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
                     if item[1] == serverAddress[1]:
                         print(f"Connection from {clientAddress} to {serverAddress} is a Passive Data Connection for FTP.")
                         timestamp = item[0]
-                        del dataPool[socketKey][j]
+                        del dataPool['PASV'][socketKey][j]
                         TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
                         localConn.close()
                         remoteConn.close()
@@ -90,7 +90,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
                     if item[1] == clientAddress[1]:
                         print(f"Connection from {clientAddress} to {serverAddress} is a Active Data Connection for FTP.")
                         timestamp = item[0]
-                        del dataPool[socketKey][j]
+                        del dataPool['ACTV'][socketKey][j]
                         TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
                         localConn.close()
                         remoteConn.close()
