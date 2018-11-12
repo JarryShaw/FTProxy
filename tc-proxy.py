@@ -148,7 +148,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                         break
             if recvData:
                 servfd.sendall(recvData)
-                writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+                #writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if servfd in rfd:
             recvData = servfd.recv(1024)
             if recvData[:3] == b'227':
@@ -178,7 +178,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                         break
             if recvData:
                 clifd.sendall(recvData)
-                writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
+                #writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
 def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
@@ -190,12 +190,12 @@ def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
             recvData = clifd.recv(1024)
             if recvData:
                 servfd.sendall(recvData)
-                writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+                #writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if servfd in rfd:
             recvData = servfd.recv(1024)
             if recvData:
                 clifd.sendall(recvData)
-                writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
+                #writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
 def Other_Data_Trans(clifd, servfd):
