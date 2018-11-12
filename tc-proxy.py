@@ -67,6 +67,8 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
             dataPool['PASV'][socketKey] = []
         if socketKey not in dataPool['ACTV']:
             dataPool['ACTV'][socketKey] = []
+        print(dict(dataPool['PASV']))
+        print(dict(dataPool['ACTV']))
         # if socketKey in dataPool['PASV']:
         #     dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey].append([timestamp, None])
         # else:
@@ -83,7 +85,8 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
         return
 
     else:
-        # Check if the port is set for data transfer
+        # Check if port is set for data transfer
+        print(f"Check if the connection from {clientAddress} to {serverAddress} is set for data transfer")
         for _ in range(10):
             print(dict(dataPool['PASV']))
             print(dict(dataPool['ACTV']))
