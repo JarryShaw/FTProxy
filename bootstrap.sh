@@ -43,6 +43,4 @@ else
 fi
 
 # prepare Pipenv
-git clone https://github.com/JarryShaw/FTProxy.git
-cd ./FTProxy
 pipenv install
