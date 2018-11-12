@@ -12,6 +12,7 @@ import struct
 import sys
 import time
 import traceback
+
 from ftcap import writer
 
 clientBlackList = []
