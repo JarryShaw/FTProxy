@@ -12,8 +12,7 @@ import struct
 import sys
 import time
 import traceback
-
-import ftcap
+from ftcap import writer
 
 clientBlackList = []
 serverBlackList = []
@@ -50,6 +49,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
         return
 
     socketKey = (clientAddress[0], serverAddress[0])
+    socketPort = (clientAddress[1], serverAddress[1])
     if not exchangeFlag:
         remoteConn = Connect_Serv((serverAddress[0], serverAddress[1]))
         localConn = clientConn
@@ -64,7 +64,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
             dataPool[socketKey].append([timestamp, None])
         else:
             dataPool[socketKey] = [[timestamp, None]]
-        TCP_Control_Trans(localConn, remoteConn, socketKey, timestamp, dataPool)
+        TCP_Control_Trans(localConn, remoteConn, socketKey, socketPort, timestamp, dataPool)
         localConn.close()
         remoteConn.close()
         return
@@ -77,7 +77,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
                     if item[1] == serverAddress[1]:
                         timestamp = item[0]
                         del dataPool[socketKey][j]
-                        TCP_Data_Trans(localConn, remoteConn, socketKey, timestamp, dataPool)
+                        TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
                         localConn.close()
                         remoteConn.close()
                         return
@@ -90,10 +90,12 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
     return
 
 
-def TCP_Control_Trans(clifd, servfd, socketKey, timestamp, dataPool):
+def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool):
     client = clifd.getpeername()
     server = servfd.getpeername()
     readfd = [clifd, servfd]
+    fileName = f"./record/{socketKey[0]}_{socketKey[1]}_{timestamp}.ftcap"
+    writer.write_header(fileName, socketKey[0], socketKey[1], timestamp)
     while True:
         rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
@@ -101,6 +103,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, timestamp, dataPool):
             if recvData:
                 print(f"{client} said: {recvData}")
                 servfd.sendall(recvData)
+                writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if servfd in rfd:
             recvData = servfd.recv(1024)
             if recvData[:3] == b'227':
@@ -110,27 +113,32 @@ def TCP_Control_Trans(clifd, servfd, socketKey, timestamp, dataPool):
                 for j in dataPool[socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        break
             elif recvData[:3] == b'228':
                 _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 dataPort = int(port.strip())
                 for j in dataPool[socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        break
             elif recvData[:3] == b'229':
                 port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
                 dataPort = int(port)
                 for j in dataPool[socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        break
             if recvData:
                 print(f"{server} said: {recvData}")
                 clifd.sendall(recvData)
+                writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
-def TCP_Data_Trans(clifd, servfd, socketKey, timestamp, dataPool):
+def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
     client = clifd.getpeername()
     server = servfd.getpeername()
     readfd = [clifd, servfd]
+    fileName = f"./record/{socketKey[0]}_{socketKey[1]}_{timestamp}.ftcap"
     while True:
         rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
@@ -138,11 +146,13 @@ def TCP_Data_Trans(clifd, servfd, socketKey, timestamp, dataPool):
             if recvData:
                 print(f"{client} said: {recvData}")
                 servfd.sendall(recvData)
+                writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if servfd in rfd:
             recvData = servfd.recv(1024)
             if recvData:
                 print(f"{server} said: {recvData}")
                 clifd.sendall(recvData)
+                writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
 def Other_Data_Trans(clifd, servfd):
