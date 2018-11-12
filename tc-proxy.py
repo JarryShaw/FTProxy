@@ -126,6 +126,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 for j in dataPool['ACTV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        print(dict(dataPool['ACTV']))
                         break
             elif recvData[:4] == b'EPRT':
                 port = recvData.split(b'|')[-2]
@@ -134,6 +135,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 for j in dataPool['ACTV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        print(dict(dataPool['ACTV']))
                         break
             elif recvData[:4] == b'LPRT':
                 address = recvData[4:].split(b',')
@@ -146,6 +148,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 for j in dataPool['ACTV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        print(dict(dataPool['ACTV']))
                         break
             if recvData:
                 servfd.sendall(recvData)
@@ -160,6 +163,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 for j in dataPool['PASV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        print(dict(dataPool['PASV']))
                         break
             elif recvData[:3] == b'228':
                 _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
@@ -168,6 +172,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 for j in dataPool['PASV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        print(dict(dataPool['PASV']))
                         break
             elif recvData[:3] == b'229':
                 port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
@@ -176,6 +181,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 for j in dataPool['PASV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
+                        print(dict(dataPool['PASV']))
                         break
             if recvData:
                 clifd.sendall(recvData)
