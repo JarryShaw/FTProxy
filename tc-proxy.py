@@ -60,11 +60,14 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
 
     # If communicate with port 21
     if serverAddress[1] == 21:
+        print(f"Connection from {clientAddress} to {serverAddress} is a Control Connection for FTP.")
         timestamp = time.time()
         if socketKey in dataPool:
-            dataPool[socketKey].append([timestamp, None])
+            dataPool['PASV'][socketKey].append([timestamp, None])
+            dataPool['ACTV'][socketKey].append([timestamp, None])
         else:
-            dataPool[socketKey] = [[timestamp, None]]
+            dataPool['PASV'][socketKey] = [[timestamp, None]]
+            dataPool['ACTV'][socketKey] = [[timestamp, None]]
         TCP_Control_Trans(localConn, remoteConn, socketKey, socketPort, timestamp, dataPool)
         localConn.close()
         remoteConn.close()
@@ -74,8 +77,18 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
         # Check if the port is set for data transfer
         for _ in range(10):
             if socketKey in dataPool:
-                for j, item in enumerate(dataPool[socketKey]):
+                for j, item in enumerate(dataPool['PASV'][socketKey]):
                     if item[1] == serverAddress[1]:
+                        print(f"Connection from {clientAddress} to {serverAddress} is a Passive Data Connection for FTP.")
+                        timestamp = item[0]
+                        del dataPool[socketKey][j]
+                        TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
+                        localConn.close()
+                        remoteConn.close()
+                        return
+                for j, item in enumerate(dataPool['ACTV'][socketKey]):
+                    if item[1] == clientAddress[1]:
+                        print(f"Connection from {clientAddress} to {serverAddress} is a Active Data Connection for FTP.")
                         timestamp = item[0]
                         del dataPool[socketKey][j]
                         TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
@@ -92,8 +105,6 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
 
 
 def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool):
-    client = clifd.getpeername()
-    server = servfd.getpeername()
     readfd = [clifd, servfd]
     fileName = f"./record/{socketKey[0]}_{socketKey[1]}_{timestamp}.ftcap"
     writer.write_header(fileName, socketKey[0], socketKey[1], timestamp)
@@ -101,6 +112,35 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
         rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
             recvData = clifd.recv(1024)
+            if recvData[:4] == b'PORT':
+                _, _, _, _, e, f = recvData[4:].split(b',')
+                e, f = int(e.strip()), int(f.strip())
+                dataPort = e * 256 + f
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
+                for j in dataPool['ACTV'][socketKey]:
+                    if j[0] == timestamp:
+                        j[1] = dataPort
+                        break
+            elif recvData[:4] == b'EPRT':
+                port = recvData.split(b'|')[-2]
+                dataPort = int(port)
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
+                for j in dataPool['ACTV'][socketKey]:
+                    if j[0] == timestamp:
+                        j[1] = dataPort
+                        break
+            elif recvData[:4] == b'LPRT':
+                address = recvData[4:].split(b',')
+                ipNum = int(address[1].strip())
+                ports = address[(2+ipNum):]
+                dataPort = 0
+                for i in ports:
+                    dataPort = dataPort * 256 + int(i.strip())
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
+                for j in dataPool['ACTV'][socketKey]:
+                    if j[0] == timestamp:
+                        j[1] = dataPort
+                        break
             if recvData:
                 servfd.sendall(recvData)
                 writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
@@ -110,21 +150,24 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 e, f = int(e.strip()), int(f.strip())
                 dataPort = e * 256 + f
-                for j in dataPool[socketKey]:
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
+                for j in dataPool['PASV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
                         break
             elif recvData[:3] == b'228':
                 _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 dataPort = int(port.strip())
-                for j in dataPool[socketKey]:
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
+                for j in dataPool['PASV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
                         break
             elif recvData[:3] == b'229':
                 port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
                 dataPort = int(port)
-                for j in dataPool[socketKey]:
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
+                for j in dataPool['PASV'][socketKey]:
                     if j[0] == timestamp:
                         j[1] = dataPort
                         break
@@ -134,8 +177,6 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
 
 
 def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
-    client = clifd.getpeername()
-    server = servfd.getpeername()
     readfd = [clifd, servfd]
     fileName = f"./record/{socketKey[0]}_{socketKey[1]}_{timestamp}.ftcap"
     while True:
@@ -153,8 +194,6 @@ def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
 
 
 def Other_Data_Trans(clifd, servfd):
-    client = clifd.getpeername()
-    server = servfd.getpeername()
     readfd = [clifd, servfd]
     while True:
         rfd, _, _ = select.select(readfd, [], [])
@@ -226,6 +265,8 @@ def main():
     global LOCK
     LOCK = multiprocessing.Lock()
     dataPool = manager.dict()
+    dataPool['PASV'] = {}
+    dataPool['ACTV'] = {}
     tcpSocket = tcp_listen(port)
     print(f'listening on {sys.argv[2]}')
     try:
