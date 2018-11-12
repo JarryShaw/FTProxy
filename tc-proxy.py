@@ -146,6 +146,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         dataPool['ACTV'][socketKey] = tmp
                 #         print(dict(dataPool['ACTV']))
                 #         break
+                print(dict(dataPool['ACTV']))
             elif recvData[:4] == b'EPRT':
                 port = recvData.split(b'|')[-2]
                 dataPort = int(port)
@@ -161,6 +162,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         dataPool['ACTV'][socketKey] = tmp
                 #         print(dict(dataPool['ACTV']))
                 #         break
+                print(dict(dataPool['ACTV']))
             elif recvData[:4] == b'LPRT':
                 address = recvData[4:].split(b',')
                 ipNum = int(address[1].strip())
@@ -180,6 +182,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         dataPool['ACTV'][socketKey] = tmp
                 #         print(dict(dataPool['ACTV']))
                 #         break
+                print(dict(dataPool['ACTV']))
             if recvData:
                 servfd.sendall(recvData)
                 writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
@@ -201,6 +204,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         dataPool['PASV'][socketKey] = tmp
                 #         print(dict(dataPool['PASV']))
                 #         break
+                print(dict(dataPool['PASV']))
             elif recvData[:3] == b'228':
                 _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 dataPort = int(port.strip())
@@ -216,6 +220,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         dataPool['PASV'][socketKey] = tmp
                 #         print(dict(dataPool['PASV']))
                 #         break
+                print(dict(dataPool['PASV']))
             elif recvData[:3] == b'229':
                 port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
                 dataPort = int(port)
@@ -231,6 +236,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         dataPool['PASV'][socketKey] = tmp
                 #         print(dict(dataPool['PASV']))
                 #         break
+                print(dict(dataPool['PASV']))
             if recvData:
                 clifd.sendall(recvData)
                 writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
