@@ -89,7 +89,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
                     timestamp = item[0]
                     dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + dataPool['PASV'][socketKey][j+1:]
                     if not dataPool['PASV'][socketKey]:
-                        del dataPool['PASV'][socketKey]
+                        dataPool['PASV'][socketKey] = []
                     TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
                     localConn.close()
                     remoteConn.close()
@@ -100,7 +100,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
                     timestamp = item[0]
                     dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey][:j] + dataPool['ACTV'][socketKey][j+1:]
                     if not dataPool['ACTV'][socketKey]:
-                        del dataPool['ACTV'][socketKey]
+                        dataPool['ACTV'][socketKey] = []
                     TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
                     localConn.close()
                     remoteConn.close()
