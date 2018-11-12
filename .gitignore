@@ -1,4 +1,8 @@
 
+sample/
+record/
+*.ftcap
+
 # Created by https://www.gitignore.io/api/python,pycharm+all,visualstudiocode,macos,windows,linux,c
 # Edit at https://www.gitignore.io/?templates=python,pycharm+all,visualstudiocode,macos,windows,linux,c
 

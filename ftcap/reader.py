@@ -16,7 +16,7 @@ def reader(filename):
                 frames.append(Frame(file, frameno=frameno,
                                     client=header.client,
                                     server=header.server))
-            except (EOFError, StopIteration):
+            except EOFError:
                 # quit when EOF
                 break
             frameno += 1

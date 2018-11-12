@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import ipaddress
 import time
 
@@ -28,9 +27,9 @@ class Header(pcapkit.ipsuite.protocol.Protocol):
         def __make_timestamp__():
             """Make timestamp."""
             timestamp = self.__args__.get('timestamp', time.time())     # timestamp
-            now = datetime.datetime.fromtimestamp(timestamp)            # timestamp datetime instance
-            ts_sec = self.__args__.get('ts_sec', now.second)            # timestamp seconds
-            ts_usec = self.__args__.get('ts_usec', now.microsecond)     # timestamp microseconds
+            ts_sec = self.__args__.get('ts_sec', int(timestamp))        # timestamp seconds
+            _default_ts_usec = int((timestamp - ts_sec) * 1000000)
+            ts_usec = self.__args__.get('ts_usec', _default_ts_usec)    # timestamp microseconds
             return ts_sec, ts_usec
 
         def __make_address__(key):

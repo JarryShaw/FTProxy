@@ -1,9 +1,13 @@
 {
     "python.pythonPath": "/Users/jarryshaw/.local/share/virtualenvs/FTProxy-8yoelX7l/bin/python",
     "cSpell.words": [
+        "ACTV",
+        "EPRT",
         "INET",
         "IPPROTO",
+        "LPRT",
         "NFQUEUE",
+        "PASV",
         "REUSEADDR",
         "Serv",
         "async",
@@ -30,5 +34,8 @@
         "vbytes",
         "verbit"
     ],
-    "python.linting.pylintEnabled": true
+    "python.linting.pylintEnabled": true,
+    "python.linting.pep8Args": [
+        "--max-line-length=200"
+    ],
 }

@@ -47,12 +47,12 @@
         },
         "pypcapkit": {
             "hashes": [
-                "sha256:4583315493b218dac80874424f51810c5da351735332e0dbc7c69fd16db32e19",
-                "sha256:6421582d9296cc4887864c9a4424a80bccb1de816b627e43fd1aab52b97984dc",
-                "sha256:6ae2a25fc5b00535520f7e7fdb64a65f127bc55d1489a5d2d4b4c7c9bee21db7"
+                "sha256:5807282ab9f5e970d68184d9383f90b69ec949f0d94405166235db6578e279d8",
+                "sha256:9bdbda4e503c618f1f39a46abfa109ea4c3462a7739fb1365dc4f5b39fd8a147",
+                "sha256:c5df9d0f85a7167583e3739872fca2c60eeb9f773d55c5a2b74397ccc60cc8ac"
             ],
             "index": "pypi",
-            "version": "==0.12.6"
+            "version": "==0.12.8"
         }
     },
     "develop": {

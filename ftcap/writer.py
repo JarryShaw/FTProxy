@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import ipaddress
+
 from ftcap.cst.frame import Frame
 from ftcap.cst.header import Header
 
@@ -10,14 +12,16 @@ class writer:
 
     def __init__(self, filename, client, server, timestamp):
         self.write_header(filename, client, server, timestamp)
+        self._client = ipaddress.ip_address(client)
+        self._server = ipaddress.ip_address(server)
         self._file = filename
-        self._client = client
-        self._server = server
 
     def __call__(self, src, dst, srcport, dstport, payload):
-        if (self._client == src) and (self._server == dst):
+        srcip = ipaddress.ip_address(src)
+        dstip = ipaddress.ip_address(dst)
+        if (self._client == srcip) and (self._server == dstip):
             flag = True
-        elif (self._client == dst) and (self._server == src):
+        elif (self._client == dstip) and (self._server == srcip):
             flag = False
         else:
             raise ValueError('mismatched IP addresses')

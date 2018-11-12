@@ -35,13 +35,13 @@ class Frame(pcapkit.protocols.protocol.Protocol):
         if _ts_sec is None:
             raise EOFError
         _ts_usec = self._read_unpack(4)
-        _flag_length = self._read_binary(1)
+        _flag_length = self._read_binary(2)
 
         _flag = bool(int(_flag_length[0], base=2))
         _length = int(_flag_length[1:], base=2)
 
-        _srcport = self._read_unpack(4)
-        _dstport = self._read_unpack(4)
+        _srcport = self._read_unpack(2)
+        _dstport = self._read_unpack(2)
 
         if _flag:
             _srcip, _dstip = self._server, self._client

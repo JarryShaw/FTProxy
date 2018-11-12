@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import datetime
 import ipaddress
 import time
 
@@ -28,16 +27,16 @@ class Frame(pcapkit.ipsuite.protocol.Protocol):
         def __make_timestamp__():
             """Make timestamp."""
             timestamp = self.__args__.get('timestamp', time.time())     # timestamp
-            now = datetime.datetime.fromtimestamp(timestamp)            # timestamp datetime instance
-            ts_sec = self.__args__.get('ts_sec', now.second)            # timestamp seconds
-            ts_usec = self.__args__.get('ts_usec', now.microsecond)     # timestamp microseconds
+            ts_sec = self.__args__.get('ts_sec', int(timestamp))        # timestamp seconds
+            _default_ts_usec = int((timestamp - ts_sec) * 1000000)
+            ts_usec = self.__args__.get('ts_usec', _default_ts_usec)    # timestamp microseconds
             return ts_sec, ts_usec
 
         # fetch values
         ts_sec, ts_usec = __make_timestamp__()
-        flag = self.__args__['flag']
-        srcport = self.__args__['srcport']
-        dstport = self.__args__['dstport']
+        flag = self.__args__.get('flag', False)
+        srcport = self.__args__.get('srcport', 0)
+        dstport = self.__args__.get('dstport', 0)
         payload = self.__args__.get('payload', bytes())
         length = self.__args__.get('length', len(payload))
         flag_length = int(f'{int(flag)}{bin(length)[2:].zfill(15)}', base=2)
