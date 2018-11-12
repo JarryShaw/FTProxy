@@ -34,6 +34,7 @@ def LoadServerBlackList(file):
 
 
 def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
+    print(dataPool)
     exchangeFlag = False
     if ipaddress.ip_address(serverAddress[0]).is_private:
         clientAddress, serverAddress = serverAddress, clientAddress
