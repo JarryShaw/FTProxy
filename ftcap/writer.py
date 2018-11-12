@@ -45,3 +45,8 @@ class writer:
 
         with open(filename, 'ab') as file:
             file.write(packet)
+
+    @classmethod
+    def async_write(cls, lock, filename, flag, srcport, dstport, payload):
+        with lock:
+            cls.write_frame(filename, flag, srcport, dstport, payload)

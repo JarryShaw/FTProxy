@@ -6,6 +6,7 @@
         "NFQUEUE",
         "REUSEADDR",
         "Serv",
+        "async",
         "clifd",
         "dstip",
         "dstport",

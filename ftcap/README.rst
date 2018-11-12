@@ -39,23 +39,6 @@ API - writer
     @staticmethod
     writer.write_header(filename, client, server, timestamp)
 
-- ``filename`` -- ``str``, name of output file
-- ``client`` -- c.f. ``ipaddress.ip_address``, client IP address
-- ``server`` -- c.f. ``ipaddress.ip_address``, server IP address
-- ``timestamp`` -- ``float``, UNIX-Epoch timestamp
-
-.. code:: python
-
-    @staticmethod
-    writer.write_frame(filename, flag, srcport, dstport, payload)
-
-- ``flag`` -- ``bool``, direction (``True``: client->server; ``False``: server->client)
-- ``srcport`` -- ``int``, source port
-- ``dstport`` -- ``int``, destination port
-- ``payload`` -- ``bytes``, packet payload
-
-.. code:: python
-
     # create a writer instance
     >>> wrt = writer(filename, *, client, server, timestamp)
 
@@ -66,14 +49,24 @@ API - writer
 
 .. code:: python
 
+    @staticmethod
+    writer.write_frame(filename, flag, srcport, dstport, payload)
+
+    @classmethod
+    writer.async_write(lock, filename, flag, srcport, dstport, payload)
+
     # then directly call on the instance
     >>> wrt(src, dst, srcport, dstport, payload)
 
-- ``src`` -- c.f. ``ipaddress.ip_address``, source IP address
-- ``dst`` -- c.f. ``ipaddress.ip_address``, destination IP address
+- ``flag`` -- ``bool``, direction (``True``: client->server; ``False``: server->client)
 - ``srcport`` -- ``int``, source port
 - ``dstport`` -- ``int``, destination port
 - ``payload`` -- ``bytes``, packet payload
+
+- ``lock`` -- c.f. ``multiprocessing.Lock``, some lock
+
+- ``src`` -- c.f. ``ipaddress.ip_address``, source IP address
+- ``dst`` -- c.f. ``ipaddress.ip_address``, destination IP address
 
 API - reader
 ============
