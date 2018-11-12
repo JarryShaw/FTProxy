@@ -36,6 +36,26 @@ API - writer
 
 .. code:: python
 
+    @staticmethod
+    writer.write_header(filename, client, server, timestamp)
+
+- ``filename`` -- ``str``, name of output file
+- ``client`` -- c.f. ``ipaddress.ip_address``, client IP address
+- ``server`` -- c.f. ``ipaddress.ip_address``, server IP address
+- ``timestamp`` -- ``float``, UNIX-Epoch timestamp
+
+.. code:: python
+
+    @staticmethod
+    writer.write_header(filename, flag, srcport, dstport, payload)
+
+- ``flag`` -- ``bool``, direction (``True``: client->server; ``False``: server->client)
+- ``srcport`` -- ``int``, source port
+- ``dstport`` -- ``int``, destination port
+- ``payload`` -- ``bytes``, packet payload
+
+.. code:: python
+
     # create a writer instance
     >>> wrt = writer(filename, *, client, server, timestamp)
 

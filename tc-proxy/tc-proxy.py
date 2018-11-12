@@ -5,13 +5,14 @@ import ipaddress
 import json
 import multiprocessing
 import pathlib
+import re
 import select
 import socket
 import struct
 import sys
 import time
 import traceback
-import re
+
 import ftcap
 
 clientBlackList = []
