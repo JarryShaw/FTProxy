@@ -34,7 +34,6 @@ def LoadServerBlackList(file):
 
 
 def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
-    print(dataPool)
     exchangeFlag = False
     if ipaddress.ip_address(serverAddress[0]).is_private:
         clientAddress, serverAddress = serverAddress, clientAddress
@@ -63,12 +62,15 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
     if serverAddress[1] == 21:
         print(f"Connection from {clientAddress} to {serverAddress} is a Control Connection for FTP.")
         timestamp = time.time()
-        if socketKey in dataPool:
+        if socketKey in dataPool['PASV']:
             dataPool['PASV'][socketKey].append([timestamp, None])
-            dataPool['ACTV'][socketKey].append([timestamp, None])
         else:
             dataPool['PASV'][socketKey] = [[timestamp, None]]
+        if socketKey in dataPool['ACTV']:
+            dataPool['ACTV'][socketKey].append([timestamp, None])
+        else:
             dataPool['ACTV'][socketKey] = [[timestamp, None]]
+        print(dataPool)
         TCP_Control_Trans(localConn, remoteConn, socketKey, socketPort, timestamp, dataPool)
         localConn.close()
         remoteConn.close()
