@@ -47,7 +47,7 @@ API - writer
 .. code:: python
 
     @staticmethod
-    writer.write_header(filename, flag, srcport, dstport, payload)
+    writer.write_frame(filename, flag, srcport, dstport, payload)
 
 - ``flag`` -- ``bool``, direction (``True``: client->server; ``False``: server->client)
 - ``srcport`` -- ``int``, source port
