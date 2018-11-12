@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import getopt
-import socket
-import sys
-import traceback
+import ipaddress
 import json
 import multiprocessing
-import struct
-import select
-import ipaddress
 import pathlib
+import select
+import socket
+import struct
+import sys
 import time
+import traceback
 
 clientBlackList = []
 serverBlackList = []
@@ -68,11 +68,11 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
 
     else:
         # Check if the port is set for data transfer
-        for i in range(10):
+        for _ in range(10):
             if socketKey in dataPool:
-                for j in range(len(dataPool[socketKey])):
-                    if dataPool[socketKey][j][1] == serverAddress[1]:
-                        timestamp = dataPool[socketKey][j][0]
+                for j, item in enumerate(dataPool[socketKey]):
+                    if item[1] == serverAddress[1]:
+                        timestamp = item[0]
                         del dataPool[socketKey][j]
                         TCP_Data_Trans(localConn, remoteConn, socketKey, timestamp, dataPool)
                         localConn.close()
@@ -92,7 +92,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, timestamp, dataPool):
     server = servfd.getpeername()
     readfd = [clifd, servfd]
     while True:
-        rfd, wfd, xfd = select.select(readfd, [], [])
+        rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
             recvData = clifd.recv(1024)
             if recvData:
@@ -101,7 +101,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, timestamp, dataPool):
         if servfd in rfd:
             recvData = servfd.recv(1024)
             if b'227 Entering Passive Mode' in recvData:
-                a, b, c, d, e, f = recvData[27:-4].split(b',')
+                _, _, _, _, e, f = recvData[27:-4].split(b',')
                 e, f = eval(e), eval(f)
                 dataPort = e * 256 + f
                 for j in dataPool[socketKey]:
@@ -117,7 +117,7 @@ def TCP_Data_Trans(clifd, servfd, socketKey, timestamp, dataPool):
     server = servfd.getpeername()
     readfd = [clifd, servfd]
     while True:
-        rfd, wfd, xfd = select.select(readfd, [], [])
+        rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
             recvData = clifd.recv(1024)
             if recvData:
@@ -135,7 +135,7 @@ def Other_Data_Trans(clifd, servfd):
     server = servfd.getpeername()
     readfd = [clifd, servfd]
     while True:
-        rfd, wfd, xfd = select.select(readfd, [], [])
+        rfd, _, _ = select.select(readfd, [], [])
         if clifd in rfd:
             recvData = clifd.recv(1024)
             if recvData:
@@ -194,7 +194,7 @@ def checkclient(cki_addr):
 
 def main():
     pathlib.Path("./record/").mkdir(parents=True, exist_ok=True)
-    opts, args = getopt.getopt(sys.argv[1:], 'p:', ["port="])
+    opts, _ = getopt.getopt(sys.argv[1:], 'p:', ["port="])
     for key, val in opts:
         if key in ('-p', "--port"):
             port = int(val)
@@ -222,7 +222,7 @@ def main():
             srvIp = socket.inet_ntoa(srvIp)
             serverAddress = (srvIp, srvPort)
             multiprocessing.Process(target=Connectionthread,
-                                        args=(newConn, clientAddress, serverAddress, dataPool)).start()
+                                    args=(newConn, clientAddress, serverAddress, dataPool)).start()
     except KeyboardInterrupt:
         print("Stop!")
     manager.shutdown()
