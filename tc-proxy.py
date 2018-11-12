@@ -136,7 +136,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 dataPort = e * 256 + f
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
                 if socketKey in dataPool['ACTV']:
-                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey].append([timestamp, dataPort])
+                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
                 else:
                     dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
                 # for j, item in enumerate(dataPool['ACTV'][socketKey]):
@@ -152,7 +152,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 dataPort = int(port)
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
                 if socketKey in dataPool['ACTV']:
-                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey].append([timestamp, dataPort])
+                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
                 else:
                     dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
                 # for j, item in enumerate(dataPool['ACTV'][socketKey]):
@@ -172,7 +172,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                     dataPort = dataPort * 256 + int(i.strip())
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
                 if socketKey in dataPool['ACTV']:
-                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey].append([timestamp, dataPort])
+                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
                 else:
                     dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
                 # for j, item in enumerate(dataPool['ACTV'][socketKey]):
@@ -194,7 +194,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 dataPort = e * 256 + f
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
                 if socketKey in dataPool['PASV']:
-                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey].append([timestamp, dataPort])
+                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
                 else:
                     dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
                 # for j, item in enumerate(dataPool['PASV'][socketKey]):
@@ -210,7 +210,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 dataPort = int(port.strip())
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
                 if socketKey in dataPool['PASV']:
-                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey].append([timestamp, dataPort])
+                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
                 else:
                     dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
                 # for j, item in enumerate(dataPool['PASV'][socketKey]):
@@ -226,7 +226,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 dataPort = int(port)
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
                 if socketKey in dataPool['PASV']:
-                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey].append([timestamp, dataPort])
+                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
                 else:
                     dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
                 # for j, item in enumerate(dataPool['PASV'][socketKey]):
