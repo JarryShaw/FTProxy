@@ -58,7 +58,7 @@ class Frame(pcapkit.protocols.protocol.Protocol):
         )
         self._length = 14 + _length
 
-        return self._decode_next_layer(frame, _length)
+        return self._decode_next_layer(frame, None, _length)
 
     ##########################################################################
     # Data models.

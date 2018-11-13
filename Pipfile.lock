@@ -33,10 +33,10 @@
         },
         "dictdumper": {
             "hashes": [
-                "sha256:cfaecd08913a5643493d1b20b063f472908741344ee9db6fa5aa10b1b456586e",
-                "sha256:de4cebb1f4741ecf8dadb43d4c54c7c84dd8e9e7e97124329359e93f80db85b6"
+                "sha256:3dad54e7ddca87e455f1f92d98c5d2b24afbc40173c85e68fa3cf5a3807c77bf",
+                "sha256:4223431a3414b4f5a7aac4045a82b4994d2c2e27c10d4200e0439d444e8abe91"
             ],
-            "version": "==0.6.2"
+            "version": "==0.6.2.post1"
         },
         "emoji": {
             "hashes": [
@@ -47,12 +47,12 @@
         },
         "pypcapkit": {
             "hashes": [
-                "sha256:5807282ab9f5e970d68184d9383f90b69ec949f0d94405166235db6578e279d8",
-                "sha256:9bdbda4e503c618f1f39a46abfa109ea4c3462a7739fb1365dc4f5b39fd8a147",
-                "sha256:c5df9d0f85a7167583e3739872fca2c60eeb9f773d55c5a2b74397ccc60cc8ac"
+                "sha256:98a43b6fcdf9f788d3d14f12f6b3f446ef531ce1c64162caa4d16a4f0022409c",
+                "sha256:9ff51bb2ec7fe07fe6ea77d324aa4633c1605fa349621eb478641a98f84ebe49",
+                "sha256:eb8cf0d59c884787e5ee31064d449fd5221019411e30c2a57ca382cb33b31d7e"
             ],
             "index": "pypi",
-            "version": "==0.12.8"
+            "version": "==0.12.9.post2"
         }
     },
     "develop": {
@@ -73,10 +73,10 @@
         },
         "autopep8": {
             "hashes": [
-                "sha256:1b8d42ebba751a91090d3adb5c06840b1151d71ed43e1c7a9ed6911bfe8ebe6c"
+                "sha256:33d2b5325b7e1afb4240814fe982eea3a92ebea712869bfd08b3c0393404248c"
             ],
             "index": "pypi",
-            "version": "==1.4.2"
+            "version": "==1.4.3"
         },
         "backcall": {
             "hashes": [
