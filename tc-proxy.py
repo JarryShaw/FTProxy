@@ -87,7 +87,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
     else:
         # Check if port is set for data transfer
         print(f"Check if the connection from {clientAddress} to {serverAddress} is set for data transfer")
-        if clientAddress == eth0IP:
+        if serverAddress[1] == 20:
             for _ in range(10):
                 # print(dict(dataPool['PASV']))
                 print(dict(dataPool['ACTV']))
@@ -118,7 +118,7 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
                             remoteConn.close()
                             return
                 time.sleep(0.01)
-        if clientAddress == eth0IP:
+        else:
             for _ in range(10):
                 print(dict(dataPool['PASV']))
                 # print(dict(dataPool['ACTV']))
