@@ -20,7 +20,6 @@ serverBlackList = []
 SO_ORIGINAL_DST = 80
 LOCK = None
 MAX_LENGTH = 4096
-eth0IP = None
 
 
 def LoadClientBlackList(file):
@@ -390,5 +389,9 @@ def main():
     manager.shutdown()
 
 
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+eth0IP = s.getsockname()[0]
+s.close()
 if __name__ == '__main__':
     main()
