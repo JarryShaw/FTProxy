@@ -20,6 +20,7 @@ iptables -P FORWARD DROP
 #允许相关流量进入防火墙
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 #实现内部接口与外部接口之间的数据转发
+iptables -A FORWARD -i eth1 -o eth0 -p tcp -j DROP
 iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
 iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 #网络地址翻译
