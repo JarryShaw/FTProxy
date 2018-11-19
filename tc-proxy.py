@@ -169,7 +169,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 e, f = int(e.strip()), int(f.strip())
                 dataPort = e * 256 + f
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
-                recvData = b'PORT %s,%d,%d\r\n' % (eth0IP.replace('.', ','), e, f)
+                recvData = ('PORT %s,%d,%d\r\n' % (eth0IP.replace('.', ','), e, f)).encode()
                 if socketKey in dataPool['ACTV']:
                     dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
                 else:
@@ -186,7 +186,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 port = recvData.split(b'|')[-2]
                 dataPort = int(port)
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
-                recvData = b'EPRT |1|%s|%d|\r\n' % (eth0IP, port)
+                recvData = ('EPRT |1|%s|%d|\r\n' % (eth0IP, port)).encode()
                 if socketKey in dataPool['ACTV']:
                     dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
                 else:
@@ -208,7 +208,7 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 for i in ports:
                     dataPort = dataPort * 256 + int(i.strip())
                 print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
-                recvData = b'LPRT 4,4,%s,%s,%s\r\n' % (eth0IP.replace('.', ','), portNum, ','.join(ports))
+                recvData = ('LPRT 4,4,%s,%s,%s\r\n' % (eth0IP.replace('.', ','), portNum, ','.join(ports))).encode()
                 if socketKey in dataPool['ACTV']:
                     dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
                 else:
