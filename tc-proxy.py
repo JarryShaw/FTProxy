@@ -52,7 +52,9 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
 
     socketKey = (localAddress[0], remoteAddress[0])
     socketPort = (localAddress[1], remoteAddress[1])
-    responderConn = Connect_Serv((responderAddress[0], responderAddress[1]))
+    print(f"Connecting to {responderAddress}.")
+    responderConn = Connect_Serv(responderAddress)
+    print("Succeed")
 
     # If communicate with port 21
     if responderAddress[1] == 21:
