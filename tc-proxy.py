@@ -34,34 +34,29 @@ def LoadServerBlackList(file):
         serverBlackList = json.load(f)
 
 
-def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
-    exchangeFlag = False
-    if ipaddress.ip_address(serverAddress[0]).is_private:
-        clientAddress, serverAddress = serverAddress, clientAddress
-        exchangeFlag = True
-    print(f"Accept connection from {clientAddress[0]}:{clientAddress[1]} to {serverAddress[0]}:{serverAddress[1]}")
-
-    if not checkclient(clientAddress[0]):
-        print(f"Client {clientAddress[0]} has been blocked.")
-        clientConn.close()
-        return
-    elif not checkserver(serverAddress[0]):
-        print(f"Server {serverAddress[0]} has been blocked.")
-        clientConn.close()
-        return
-
-    socketKey = (clientAddress[0], serverAddress[0])
-    socketPort = (clientAddress[1], serverAddress[1])
-    if not exchangeFlag:
-        remoteConn = Connect_Serv((serverAddress[0], serverAddress[1]))
-        localConn = clientConn
+def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool):
+    if ipaddress.ip_address(responderAddress[0]).is_private:
+        localAddress, remoteAddress = responderAddress, requesterAddress
     else:
-        remoteConn = clientConn
-        localConn = Connect_Serv((serverAddress[0], serverAddress[1]))
+        localAddress, remoteAddress = requesterAddress, responderAddress
+    print(f"Accept connection from {requesterAddress[0]}:{requesterAddress[1]} to {responderAddress[0]}:{responderAddress[1]}")
+
+    if not checkclient(localAddress[0]):
+        print(f"Client {localAddress[0]} has been blocked.")
+        requesterConn.close()
+        return
+    elif not checkserver(remoteAddress[0]):
+        print(f"Server {remoteAddress[0]} has been blocked.")
+        requesterConn.close()
+        return
+
+    socketKey = (localAddress[0], remoteAddress[0])
+    socketPort = (localAddress[1], remoteAddress[1])
+    responderConn = Connect_Serv((responderAddress[0], responderAddress[1]))
 
     # If communicate with port 21
-    if serverAddress[1] == 21:
-        print(f"Connection from {clientAddress} to {serverAddress} is a Control Connection for FTP.")
+    if responderAddress[1] == 21:
+        print(f"Connection from {requesterAddress} to {responderAddress} is a Control Connection for FTP.")
         timestamp = time.time()
         if socketKey not in dataPool['PASV']:
             dataPool['PASV'][socketKey] = []
@@ -79,91 +74,92 @@ def Connectionthread(clientConn, clientAddress, serverAddress, dataPool):
         # else:
         #     dataPool['ACTV'][socketKey] = [[timestamp, None]]
         # print(dict(dataPool['ACTV']))
-        TCP_Control_Trans(localConn, remoteConn, socketKey, socketPort, timestamp, dataPool)
-        localConn.close()
-        remoteConn.close()
+        TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp, dataPool)
+        requesterConn.close()
+        responderConn.close()
         return
 
-    else:
+    elif responderAddress[1] == 20:
         # Check if port is set for data transfer
-        print(f"Check if the connection from {clientAddress} to {serverAddress} is set for data transfer")
-        if serverAddress[1] == 20:
-            for _ in range(10):
-                # print(dict(dataPool['PASV']))
-                print(dict(dataPool['ACTV']))
-                # if socketKey in dataPool['PASV']:
-                #     for j, item in enumerate(dataPool['PASV'][socketKey]):
-                #         if item[1] == serverAddress[1]:
-                #             print(f"Connection from {clientAddress} to {serverAddress} is a Passive Data Connection for FTP.")
-                #             timestamp = item[0]
-                #             dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + dataPool['PASV'][socketKey][j+1:] if len(dataPool['PASV'][socketKey]) > 1 else []
-                #             # if not dataPool['PASV'][socketKey]:
-                #             #     dataPool['PASV'][socketKey] = []
-                #             TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
-                #             localConn.close()
-                #             remoteConn.close()
-                #             return
-                for socketKey in dataPool['ACTV']:
-                    for j, item in enumerate(dataPool['ACTV'][socketKey]):
-                        if item[1] == clientAddress[1]:
-                            print(f"Connection from {clientAddress} to {serverAddress} is a Active Data Connection for FTP.")
-                            timestamp = item[0]
-                            localConn.close()
-                            localConn = Connect_Serv((socketKey[0], item[1]))
-                            dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey][:j] + dataPool['ACTV'][socketKey][j+1:] if len(dataPool['ACTV'][socketKey]) > 1 else []
-                            # if not dataPool['ACTV'][socketKey]:
-                            #     dataPool['ACTV'][socketKey] = []
-                            TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
-                            localConn.close()
-                            remoteConn.close()
-                            return
-                time.sleep(0.01)
-        else:
-            for _ in range(10):
-                print(dict(dataPool['PASV']))
-                # print(dict(dataPool['ACTV']))
-                if socketKey in dataPool['PASV']:
-                    for j, item in enumerate(dataPool['PASV'][socketKey]):
-                        if item[1] == serverAddress[1]:
-                            print(f"Connection from {clientAddress} to {serverAddress} is a Passive Data Connection for FTP.")
-                            timestamp = item[0]
-                            dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + dataPool['PASV'][socketKey][j+1:] if len(dataPool['PASV'][socketKey]) > 1 else []
-                            # if not dataPool['PASV'][socketKey]:
-                            #     dataPool['PASV'][socketKey] = []
-                            TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
-                            localConn.close()
-                            remoteConn.close()
-                            return
-                # if socketKey in dataPool['ACTV']:
-                #     for j, item in enumerate(dataPool['ACTV'][socketKey]):
-                #         if item[1] == clientAddress[1]:
-                #             print(f"Connection from {clientAddress} to {serverAddress} is a Active Data Connection for FTP.")
-                #             timestamp = item[0]
-                #             dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey][:j] + dataPool['ACTV'][socketKey][j+1:] if len(dataPool['ACTV'][socketKey]) > 1 else []
-                #             # if not dataPool['ACTV'][socketKey]:
-                #             #     dataPool['ACTV'][socketKey] = []
-                #             TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
-                #             localConn.close()
-                #             remoteConn.close()
-                #             return
-                time.sleep(0.01)
+        print(f"Check if the connection from {requesterAddress} to {responderAddress} is an active mode data transfer")
+        for _ in range(10):
+            # print(dict(dataPool['PASV']))
+            print(dict(dataPool['ACTV']))
+            # if socketKey in dataPool['PASV']:
+            #     for j, item in enumerate(dataPool['PASV'][socketKey]):
+            #         if item[1] == serverAddress[1]:
+            #             print(f"Connection from {clientAddress} to {serverAddress} is a Passive Data Connection for FTP.")
+            #             timestamp = item[0]
+            #             dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + dataPool['PASV'][socketKey][j+1:] if len(dataPool['PASV'][socketKey]) > 1 else []
+            #             # if not dataPool['PASV'][socketKey]:
+            #             #     dataPool['PASV'][socketKey] = []
+            #             TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
+            #             localConn.close()
+            #             remoteConn.close()
+            #             return
+            for socketKey in dataPool['ACTV']:
+                for j, item in enumerate(dataPool['ACTV'][socketKey]):
+                    if item[1] == requesterAddress[1]:
+                        print(f"Connection from {requesterAddress} to {responderAddress} is a Active Data Connection for FTP.")
+                        timestamp = item[0]
+                        requesterConn.close()
+                        requesterConn = Connect_Serv((socketKey[0], item[1]))
+                        dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey][:j] + dataPool['ACTV'][socketKey][j+1:] if len(dataPool['ACTV'][socketKey]) > 1 else []
+                        # if not dataPool['ACTV'][socketKey]:
+                        #     dataPool['ACTV'][socketKey] = []
+                        TCP_Data_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp)
+                        requesterConn.close()
+                        responderConn.close()
+                        return
+            time.sleep(0.01)
 
-    # Other Data Transfer
-    print("This is not a FTP connection.")
-    Other_Data_Trans(localConn, remoteConn)
-    localConn.close()
-    remoteConn.close()
-    return
+    elif requesterAddress[1] == 20:
+        print(f"Check if the connection from {requesterAddress} to {responderAddress} is a passive mode data transfer")
+        for _ in range(10):
+            print(dict(dataPool['PASV']))
+            # print(dict(dataPool['ACTV']))
+            if socketKey in dataPool['PASV']:
+                for j, item in enumerate(dataPool['PASV'][socketKey]):
+                    if item[1] == responderAddress[1]:
+                        print(f"Connection from {requesterAddress} to {responderAddress} is a Passive Data Connection for FTP.")
+                        timestamp = item[0]
+                        dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + dataPool['PASV'][socketKey][j+1:] if len(dataPool['PASV'][socketKey]) > 1 else []
+                        # if not dataPool['PASV'][socketKey]:
+                        #     dataPool['PASV'][socketKey] = []
+                        TCP_Data_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp)
+                        requesterConn.close()
+                        responderConn.close()
+                        return
+            # if socketKey in dataPool['ACTV']:
+            #     for j, item in enumerate(dataPool['ACTV'][socketKey]):
+            #         if item[1] == clientAddress[1]:
+            #             print(f"Connection from {clientAddress} to {serverAddress} is a Active Data Connection for FTP.")
+            #             timestamp = item[0]
+            #             dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey][:j] + dataPool['ACTV'][socketKey][j+1:] if len(dataPool['ACTV'][socketKey]) > 1 else []
+            #             # if not dataPool['ACTV'][socketKey]:
+            #             #     dataPool['ACTV'][socketKey] = []
+            #             TCP_Data_Trans(localConn, remoteConn, socketKey, socketPort, timestamp)
+            #             localConn.close()
+            #             remoteConn.close()
+            #             return
+            time.sleep(0.01)
+    else:
+        # Other Data Transfer
+        print("This is not a FTP connection.")
+        Other_Data_Trans(requesterConn, responderConn)
+        requesterConn.close()
+        responderConn.close()
+        return
 
 
-def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool):
-    readfd = [clifd, servfd]
+def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp, dataPool):
+    readfd = [requesterConn, responderConn]
     fileName = f"./record/{socketKey[0]}_{socketKey[1]}_{timestamp}.ftcap"
     writer.write_header(fileName, socketKey[0], socketKey[1], timestamp)
     while True:
         rfd, _, _ = select.select(readfd, [], [])
-        if clifd in rfd:
-            recvData = clifd.recv(MAX_LENGTH)
+        if requesterConn in rfd:
+            recvData = requesterConn.recv(MAX_LENGTH)
             if recvData[:4] == b'PORT':
                 _, _, _, _, e, f = recvData[4:].split(b',')
                 e, f = int(e.strip()), int(f.strip())
@@ -222,10 +218,10 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         break
                 print(dict(dataPool['ACTV']))
             if recvData:
-                servfd.sendall(recvData)
+                responderConn.sendall(recvData)
                 writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
-        if servfd in rfd:
-            recvData = servfd.recv(MAX_LENGTH)
+        if responderConn in rfd:
+            recvData = responderConn.recv(MAX_LENGTH)
             if recvData[:3] == b'227':
                 _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 e, f = int(e.strip()), int(f.strip())
@@ -276,39 +272,39 @@ def TCP_Control_Trans(clifd, servfd, socketKey, socketPort, timestamp, dataPool)
                 #         break
                 print(dict(dataPool['PASV']))
             if recvData:
-                clifd.sendall(recvData)
+                requesterConn.sendall(recvData)
                 writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
-def TCP_Data_Trans(clifd, servfd, socketKey, socketPort, timestamp):
-    readfd = [clifd, servfd]
+def TCP_Data_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp):
+    readfd = [requesterConn, responderConn]
     fileName = f"./record/{socketKey[0]}_{socketKey[1]}_{timestamp}.ftcap"
     while True:
         rfd, _, _ = select.select(readfd, [], [])
-        if clifd in rfd:
-            recvData = clifd.recv(MAX_LENGTH)
+        if requesterConn in rfd:
+            recvData = requesterConn.recv(MAX_LENGTH)
             if recvData:
-                servfd.sendall(recvData)
+                responderConn.sendall(recvData)
                 writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
-        if servfd in rfd:
-            recvData = servfd.recv(MAX_LENGTH)
+        if responderConn in rfd:
+            recvData = responderConn.recv(MAX_LENGTH)
             if recvData:
-                clifd.sendall(recvData)
+                requesterConn.sendall(recvData)
                 writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
 
 
-def Other_Data_Trans(clifd, servfd):
-    readfd = [clifd, servfd]
+def Other_Data_Trans(requesterConn, responderConn):
+    readfd = [requesterConn, responderConn]
     while True:
         rfd, _, _ = select.select(readfd, [], [])
-        if clifd in rfd:
-            recvData = clifd.recv(MAX_LENGTH)
+        if requesterConn in rfd:
+            recvData = requesterConn.recv(MAX_LENGTH)
             if recvData:
-                servfd.sendall(recvData)
-        if servfd in rfd:
-            recvData = servfd.recv(MAX_LENGTH)
+                responderConn.sendall(recvData)
+        if responderConn in rfd:
+            recvData = responderConn.recv(MAX_LENGTH)
             if recvData:
-                clifd.sendall(recvData)
+                requesterConn.sendall(recvData)
 
 
 def Connect_Serv(serverAddr):
@@ -377,17 +373,17 @@ def main():
         while True:
             # accept a new connection
             try:
-                newConn, clientAddress = tcpSocket.accept()
+                newConn, requesterAddress = tcpSocket.accept()
             except (socket.error, socket.gaierror, socket.herror):
                 print("Failed to accept a connection.")
                 traceback.print_exc()
                 continue
             sockAddr = newConn.getsockopt(socket.SOL_IP, SO_ORIGINAL_DST, 16)
-            srvPort, srvIp = struct.unpack("!2xH4s8x", sockAddr)
-            srvIp = socket.inet_ntoa(srvIp)
-            serverAddress = (srvIp, srvPort)
+            responderPort, responderIp = struct.unpack("!2xH4s8x", sockAddr)
+            responderIp = socket.inet_ntoa(responderIp)
+            responderAddress = (responderIp, responderPort)
             multiprocessing.Process(target=Connectionthread,
-                                    args=(newConn, clientAddress, serverAddress, dataPool)).start()
+                                    args=(newConn, requesterAddress, responderAddress, dataPool)).start()
     except KeyboardInterrupt:
         print("Stop!")
     manager.shutdown()
