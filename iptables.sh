@@ -16,9 +16,13 @@ iptables -Z
 #设置默认规则
 iptables -P INPUT ACCEPT
 iptables -P OUTPUT ACCEPT
-iptables -P FORWARD DROP
+iptables -P FORWARD ACCEPT
+#端口重定向
+iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-ports 8888
+#接受来自20端口的连接
+#iptables -A INPUT -p tcp -sport 20 -j ACCEPT
 #允许相关流量进入防火墙
-iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+#iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 #实现内部接口与外部接口之间的数据转发
 #iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT
 #iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -26,11 +30,11 @@ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 #iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 #iptables -t nat -A POSTROUTING -m state --state ESTABLISHED,RELATED -j ACCEPT
 #允许路由与内网通信
-iptables -A INPUT -i eth1 -j ACCEPT
+#iptables -A INPUT -i eth1 -j ACCEPT
 #地址转换
-#iptables -t nat -A PREROUTING -i eth0 -p tcp -j DNAT --to 192.168.33.11
+#iptables -t nat -A PREROUTING -i eth0 -p tcp -j DNAT --to 192.168.33.129
 
-iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-ports 8888
+
 
 echo "1">/proc/sys/net/ipv4/ip_forward
 
