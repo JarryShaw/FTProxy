@@ -115,7 +115,7 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
                         return
             time.sleep(0.01)
 
-    elif requesterAddress[1] == 20:
+    else:
         print(f"Check if the connection from {requesterAddress} to {responderAddress} is a passive mode data transfer")
         for _ in range(10):
             print(dict(dataPool['PASV']))
@@ -145,13 +145,13 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
             #             remoteConn.close()
             #             return
             time.sleep(0.01)
-    else:
-        # Other Data Transfer
-        print("This is not a FTP connection.")
-        Other_Data_Trans(requesterConn, responderConn)
-        requesterConn.close()
-        responderConn.close()
-        return
+    
+    # Other Data Transfer
+    print("This is not a FTP connection.")
+    Other_Data_Trans(requesterConn, responderConn)
+    requesterConn.close()
+    responderConn.close()
+    return
 
 
 def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp, dataPool):
