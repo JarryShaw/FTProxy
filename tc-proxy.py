@@ -145,7 +145,7 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
             #             remoteConn.close()
             #             return
             time.sleep(0.01)
-    
+
     # Other Data Transfer
     print("This is not a FTP connection.")
     Other_Data_Trans(requesterConn, responderConn)
