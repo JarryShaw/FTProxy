@@ -1,6 +1,7 @@
 import wx
 import ftcap
 import os
+import json
 
 
 class mainFrame(wx.Frame):
@@ -30,10 +31,11 @@ class mainFrame(wx.Frame):
         self.serverInfo = wx.StaticText(self.detailPanel, -1, label="服务器信息")
         self.username = wx.StaticText(self.detailPanel, -1, label="用户名")
         self.password = wx.StaticText(self.detailPanel, -1, label="密码")
-        self.selectFile = wx.ComboBox(self.buttonPanel, -1, choices=[])
+        self.selectFile = wx.Choice(self.buttonPanel, -1, choices=[])
         self.extractFile = wx.Button(self.buttonPanel, -1, label="提取文件")
 
         self.sessions = []
+        self.files = []
 
         # self.menuBar = wx.MenuBar()
         self.statusBar = self.CreateStatusBar()
@@ -47,9 +49,14 @@ class mainFrame(wx.Frame):
         self.initPanel()
 
         self.Bind(wx.EVT_SIZE, self.onResize)
-        self.refresh.Bind(wx.EVT_BUTTON, self.onRefresh())
+        self.refresh.Bind(wx.EVT_BUTTON, self.onRefresh)
+        self.sessionList.Bind(wx.EVT_LISTBOX, self.onSelect)
+        self.extractFile.Bind(wx.EVT_BUTTON, self.onExtractFile)
+        self.clientBlacklistApply.Bind(wx.EVT_BUTTON, self.onApplyClientBlacklist)
+        self.serverBlacklistApply.Bind(wx.EVT_BUTTON, self.onApplyServerBlacklist)
+        self.userBlacklistApply.Bind(wx.EVT_BUTTON, self.onApplyUserBlacklist)
 
-        self.onRefresh()
+        self.onRefresh(None)
 
     # def initMenuBar(self):
     #     self.SetMenuBar(self.menuBar)
@@ -152,11 +159,57 @@ class mainFrame(wx.Frame):
     def barHandler(self):
         pass
 
-    def onRefresh(self):
+    def onRefresh(self, evt):
+        self.sessions = []
         fileList = ['./record/'+x for x in os.listdir('./record/')]
         for i in fileList:
             self.sessions.append(ftcap.reader(i))
 
+        self.sessionList.Clear()
+        for i in self.sessions:
+            self.sessionList.Append(i[0].info.time.ctime())
+
+        self.sessionList.SetSelection(0)
+        self._selectSessionList(0)
+
+    def onSelect(self, evt):
+        selection = self.sessionList.GetSelection()
+        self._selectSessionList(selection)
+
+    def _selectSessionList(self, selection):
+        self.flowList.DeleteAllItems()
+        self.clientInfo.SetLabel(str(self.sessions[selection][0].info.client))
+        self.serverInfo.SetLabel(str(self.sessions[selection][0].info.server))
+        username = None
+        password = None
+        self.files = {}
+        fileTransferring = False
+        fileName = None
+        fileContent = None
+        for i in self.sessions[selection][1]:
+            recvData = str(i.info.ftp.raw if 'ftp' in i else i.info.raw.packet)[2:-1]
+            self.flowList.Append((i.info.time.ctime(), i.info.src.ip, i.info.src.port, i.info.dst.ip, i.info.dst.port, recvData))
+            if 'ftp' in i:
+                if i.info.ftp.type == 'request':
+                    if i.info.ftp.command.name == 'USER':
+                        username = i.info.ftp.arg
+                    elif i.info.ftp.command.name == 'PASS':
+                        password = i.info.ftp.arg
+                    elif i.info.ftp.command.name == 'RETR':
+                        fileName = i.info.ftp.arg
+                        fileTransferring = True
+                        fileContent = b''
+                if i.info.ftp.type == 'response':
+                    if i.info.ftp.code == 226 and fileTransferring:
+                        fileTransferring = False
+                        self.files[fileName[1:]] = fileContent
+            else:
+                if fileTransferring:
+                    fileContent += i.info.raw.packet
+        self.selectFile.SetItems(list(self.files.keys()))
+
+        self.username.SetLabel(username)
+        self.password.SetLabel(password)
 
     def onResize(self, evt):
         width, height = evt.GetSize()
@@ -169,6 +222,47 @@ class mainFrame(wx.Frame):
 
         evt.Skip()
 
+    def onExtractFile(self, evt):
+        selectFile = self.selectFile.GetStringSelection()
+        if selectFile:
+            file_wildcard = "*"
+            dlg = wx.FileDialog(self, "Save as...",
+                                os.getcwd(),
+                                style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                                wildcard=file_wildcard)
+            dlg.SetFilename(selectFile)
+            if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+                with open(path, 'wb') as f:
+                    f.write(self.files[selectFile])
+        else:
+            dlg = wx.MessageDialog(None, u'未选择文件', u'提示')
+            dlg.ShowModal()
+            dlg.Destroy()
+
+    def onApplyClientBlacklist(self, evt):
+        value = self.clientBlacklist.GetValue()
+        blacklist = []
+        for i in value.split('\n'):
+            blacklist.append(i)
+        with open('clientBlacklist.json', 'w') as f:
+            json.dump(blacklist, f)
+
+    def onApplyServerBlacklist(self, evt):
+        value = self.serverBlacklist.GetValue()
+        blacklist = []
+        for i in value.split('\n'):
+            blacklist.append(i)
+        with open('serverBlacklist.json', 'w') as f:
+            json.dump(blacklist, f)
+
+    def onApplyUserBlacklist(self, evt):
+        value = self.userBlacklist.GetValue()
+        blacklist = []
+        for i in value.split('\n'):
+            blacklist.append(i)
+        with open('userBlacklist.json', 'w') as f:
+            json.dump(blacklist, f)
 
 
 class Firewall(wx.App):

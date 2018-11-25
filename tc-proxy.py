@@ -15,23 +15,16 @@ import traceback
 
 from ftcap import writer
 
-clientBlackList = []
-serverBlackList = []
 SO_ORIGINAL_DST = 80
 LOCK = None
 MAX_LENGTH = 4096
 
-
-def LoadClientBlackList(file):
-    with open(file, 'r') as f:
-        global clientBlackList
-        clientBlackList = json.load(f)
-
-
-def LoadServerBlackList(file):
-    with open(file, 'r') as f:
-        global serverBlackList
-        serverBlackList = json.load(f)
+with open('clientBlacklist.json', 'r') as f:
+    clientBlackList = json.load(f)
+with open('serverBlacklist.json', 'r') as f:
+    serverBlackList = json.load(f)
+with open('userBlacklist.json', 'r') as f:
+    userBlackList = json.load(f)
 
 
 def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool):
@@ -162,6 +155,12 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
         rfd, _, _ = select.select(readfd, [], [])
         if requesterConn in rfd:
             recvData = requesterConn.recv(MAX_LENGTH)
+            if b'USER' in recvData:
+                user = recvData.decode().split(' ')[-1]
+                if user in userBlackList:
+                    print(f"User {user} has been blocked.")
+                    writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], f"User {user} has been blocked.")
+                    return
             if recvData[:4] == b'PORT':
                 _, _, _, _, e, f = recvData[4:].split(b',')
                 e, f = int(e.strip()), int(f.strip())
@@ -338,19 +337,13 @@ def tcp_listen(port):
 
 
 def checkserver(serv_addr):
-    global serverBlackList
-    if serv_addr in serverBlackList:
-        return False
-    else:
-        return True
+    # global serverBlackList
+    return serv_addr in serverBlackList
 
 
 def checkclient(cki_addr):
-    global clientBlackList
-    if cki_addr in clientBlackList:
-        return False
-    else:
-        return True
+    # global clientBlackList
+    return cki_addr in clientBlackList
 
 
 def main():
