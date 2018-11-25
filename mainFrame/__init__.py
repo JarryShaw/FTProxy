@@ -156,6 +156,25 @@ class mainFrame(wx.Frame):
         sessionFileGridSizer.AddGrowableRow(1)
         self.buttonPanel.SetSizer(sessionFileGridSizer)
 
+        with open('clientBlacklist.json', 'r') as f:
+            value = ''
+            blacklist = json.load(f)
+            for i in blacklist:
+                value += i + '\n'
+            self.clientBlacklist.SetValue(value)
+        with open('serverBlacklist.json', 'r') as f:
+            value = ''
+            blacklist = json.load(f)
+            for i in blacklist:
+                value += i + '\n'
+            self.serverBlacklist.SetValue(value)
+        with open('userBlacklist.json', 'r') as f:
+            value = ''
+            blacklist = json.load(f)
+            for i in blacklist:
+                value += i + '\n'
+            self.userBlacklist.SetValue(value)
+
     def barHandler(self):
         pass
 
