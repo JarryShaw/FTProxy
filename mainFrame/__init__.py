@@ -286,10 +286,10 @@ class mainFrame(wx.Frame):
 
 class Firewall(wx.App):
     def OnInit(self):
-        self.myframe = mainFrame()
-        self.SetTopWindow(self.myframe)
+        self.myframe = mainFrame(Parent=None, ID=-1, Title="Transparent Proxy Manager")
+        self.myframe.Show()
         self.myframe.Centre()
-        self.myframe.Show(True)
+        self.SetTopWindow(self.myframe)
         return True
 
 # class SnifferThread(Thread):
