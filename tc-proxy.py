@@ -34,11 +34,11 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
         localAddress, remoteAddress = requesterAddress, responderAddress
     print(f"Accept connection from {requesterAddress[0]}:{requesterAddress[1]} to {responderAddress[0]}:{responderAddress[1]}")
 
-    if not checkclient(localAddress[0]):
+    if checkclient(localAddress[0]):
         print(f"Client {localAddress[0]} has been blocked.")
         requesterConn.close()
         return
-    elif not checkserver(remoteAddress[0]):
+    elif checkserver(remoteAddress[0]):
         print(f"Server {remoteAddress[0]} has been blocked.")
         requesterConn.close()
         return
