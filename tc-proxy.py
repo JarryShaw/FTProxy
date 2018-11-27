@@ -155,6 +155,7 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
         rfd, _, _ = select.select(readfd, [], [])
         if requesterConn in rfd:
             recvData = requesterConn.recv(MAX_LENGTH)
+            print(f"{socketKey[0]}:{socketPort[0]} said {recvData}")
             if b'USER' in recvData:
                 user = recvData.decode().split(' ')[-1]
                 if user in userBlackList:
@@ -223,12 +224,7 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
                 writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if responderConn in rfd:
             recvData = responderConn.recv(MAX_LENGTH)
-            if b'USER' in recvData:
-                user = recvData.decode().split(' ')[-1]
-                if user in userBlackList:
-                    print(f"User {user} has been blocked.")
-                    writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], f"User {user} has been blocked.")
-                    return
+            print(f"{socketKey[0]}:{socketPort[0]} said {recvData}")
             if recvData[:3] == b'227':
                 _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 e, f = int(e.strip()), int(f.strip())
