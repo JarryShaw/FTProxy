@@ -5,8 +5,8 @@ import json
 
 
 class mainFrame(wx.Frame):
-    def __init__(self, Parent=None, ID=-1, Title="Transparent Proxy Manager", Pos=(100, 100), Size=(800, 600)):
-        wx.Frame.__init__(self, parent=Parent, id=ID, title=Title, pos=Pos, size=Size)
+    def __init__(self, parent=None, id=-1, title="Transparent Proxy Manager", pos=(100, 100), size=(800, 600)):
+        wx.Frame.__init__(self, parent=parent, id=id, title=title, pos=pos, size=size)
 
         self.topSplitter = wx.SplitterWindow(parent=self, id=-1, style=wx.SP_3D)
         self.secondSplitter = wx.SplitterWindow(parent=self.topSplitter, id=-1, style=wx.SP_3D)
@@ -286,10 +286,10 @@ class mainFrame(wx.Frame):
 
 class Firewall(wx.App):
     def OnInit(self):
-        self.myframe = mainFrame(Parent=None, ID=-1, Title="Transparent Proxy Manager")
-        self.myframe.Show()
-        self.myframe.Centre()
-        self.SetTopWindow(self.myframe)
+        self.frame = mainFrame(parent=None, id=-1, title="Transparent Proxy Manager")
+        self.frame.Show()
+        self.frame.Centre()
+        self.SetTopWindow(self.frame)
         return True
 
 # class SnifferThread(Thread):
