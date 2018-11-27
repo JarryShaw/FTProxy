@@ -162,8 +162,8 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
                 user = recvData.decode().split(' ')[-1].strip()
                 if user in userBlackList:
                     print(f"User {user} has been blocked.")
-                requesterConn.sendall(b"User %s has been blocked.") % user
-                    writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], b"User %s has been blocked.") % user
+                    requesterConn.sendall(b"User %s has been blocked." % user)
+                    writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], b"User %s has been blocked." % user)
                     return
             if recvData[:4] == b'PORT':
                 _, _, _, _, e, f = recvData[4:].split(b',')
