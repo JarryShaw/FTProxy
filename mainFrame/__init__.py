@@ -197,14 +197,15 @@ class mainFrame(wx.Frame):
 
     def _selectSessionList(self, selection):
         self.flowList.DeleteAllItems()
+        print(str(self.sessions[selection][0].info.client), str(self.sessions[selection][0].info.server))
         self.clientInfo.SetLabel(str(self.sessions[selection][0].info.client))
         self.serverInfo.SetLabel(str(self.sessions[selection][0].info.server))
-        username = None
-        password = None
+        username = ''
+        password = ''
         self.files = {}
         fileTransferring = False
-        fileName = None
-        fileContent = None
+        fileName = ''
+        fileContent = ''
         for i in self.sessions[selection][1]:
             recvData = str(i.info.ftp.raw if 'ftp' in i else i.info.raw.packet)[2:-1]
             self.flowList.Append((i.info.time.ctime(), i.info.src.ip, i.info.src.port, i.info.dst.ip, i.info.dst.port, recvData))
