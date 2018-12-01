@@ -1,7 +1,11 @@
-import wx
-import ftcap
-import os
+# -*- coding: utf-8 -*-
+
 import json
+import os
+
+import ftcap
+
+import wx
 
 
 class mainFrame(wx.Frame):
@@ -208,7 +212,8 @@ class mainFrame(wx.Frame):
         fileContent = ''
         for i in self.sessions[selection][1]:
             recvData = str(i.info.ftp.raw if 'ftp' in i else i.info.raw.packet)[2:-1]
-            self.flowList.Append((i.info.time.ctime(), i.info.src.ip, i.info.src.port, i.info.dst.ip, i.info.dst.port, recvData))
+            self.flowList.Append((i.info.time.ctime(), i.info.src.ip, i.info.src.port,
+                                  i.info.dst.ip, i.info.dst.port, recvData))
             if 'ftp' in i:
                 if i.info.ftp.type == 'request':
                     if i.info.ftp.command.name == 'USER':

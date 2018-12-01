@@ -15,8 +15,8 @@ import traceback
 
 from ftcap import writer
 
+LOCK = multiprocessing.Lock()
 SO_ORIGINAL_DST = 80
-LOCK = None
 MAX_LENGTH = 4096
 
 with open('clientBlacklist.json', 'r') as f:
@@ -29,13 +29,19 @@ with open('userBlacklist.json', 'r') as f:
     userBlackList = json.load(f)
     print(userBlackList)
 
+# get local IP
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+    s.connect(("8.8.8.8", 80))
+    eth0IP = s.getsockname()[0]
+
 
 def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool):
     if ipaddress.ip_address(responderAddress[0]).is_private:
         localAddress, remoteAddress = responderAddress, requesterAddress
     else:
         localAddress, remoteAddress = requesterAddress, responderAddress
-    print(f"Accept connection from {requesterAddress[0]}:{requesterAddress[1]} to {responderAddress[0]}:{responderAddress[1]}")
+    print(f"Accept connection from {requesterAddress[0]}:{requesterAddress[1]} "
+          f"to {responderAddress[0]}:{responderAddress[1]}")
 
     if checkclient(localAddress[0]):
         print(f"Client {localAddress[0]} has been blocked.")
@@ -98,11 +104,13 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
             for socketKey in dataPool['ACTV']:
                 for j, item in enumerate(dataPool['ACTV'][socketKey]):
                     if item[1] == requesterAddress[1]:
-                        print(f"Connection from {requesterAddress} to {responderAddress} is a Active Data Connection for FTP.")
+                        print(
+                            f"Connection from {requesterAddress} to {responderAddress} is a Active Data Connection for FTP.")
                         timestamp = item[0]
                         requesterConn.close()
                         requesterConn = Connect_Serv((socketKey[0], item[1]))
-                        dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey][:j] + dataPool['ACTV'][socketKey][j+1:] if len(dataPool['ACTV'][socketKey]) > 1 else []
+                        dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey][:j] + \
+                            dataPool['ACTV'][socketKey][j+1:] if len(dataPool['ACTV'][socketKey]) > 1 else []
                         # if not dataPool['ACTV'][socketKey]:
                         #     dataPool['ACTV'][socketKey] = []
                         TCP_Data_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp)
@@ -119,9 +127,15 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
             if socketKey in dataPool['PASV']:
                 for j, item in enumerate(dataPool['PASV'][socketKey]):
                     if item[1] == responderAddress[1]:
-                        print(f"Connection from {requesterAddress} to {responderAddress} is a Passive Data Connection for FTP.")
+                        print(f"Connection from {requesterAddress} to {responderAddress} is "
+                              "a Passive Data Connection for FTP.")
                         timestamp = item[0]
-                        dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + dataPool['PASV'][socketKey][j+1:] if len(dataPool['PASV'][socketKey]) > 1 else []
+                        if len(dataPool['PASV'][socketKey]) > 1:
+                            dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + dataPool['PASV'][socketKey][j+1:]
+                        else:
+                            dataPool['PASV'][socketKey] = []
+                        # dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey][:j] + \
+                        #     dataPool['PASV'][socketKey][j+1:] if len(dataPool['PASV'][socketKey]) > 1 else []
                         # if not dataPool['PASV'][socketKey]:
                         #     dataPool['PASV'][socketKey] = []
                         TCP_Data_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp)
@@ -170,7 +184,8 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
                 _, _, _, _, e, f = recvData[4:].split(b',')
                 e, f = int(e.strip()), int(f.strip())
                 dataPort = e * 256 + f
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+                      f"is Active Mode. Client Data Port is {dataPort}.")
                 recvData = ('PORT %s,%d,%d\r\n' % (eth0IP.replace('.', ','), e, f)).encode()
                 if socketKey in dataPool['ACTV']:
                     dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
@@ -187,7 +202,8 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
             elif recvData[:4] == b'EPRT':
                 port = recvData.split(b'|')[-2]
                 dataPort = int(port)
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+                      f"is Active Mode. Client Data Port is {dataPort}.")
                 recvData = ('EPRT |1|%s|%d|\r\n' % (eth0IP, port)).encode()
                 if socketKey in dataPool['ACTV']:
                     dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
@@ -209,7 +225,8 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
                 dataPort = 0
                 for i in ports:
                     dataPort = dataPort * 256 + int(i.strip())
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Active Mode. Client Data Port is {dataPort}.")
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+                      f"is Active Mode. Client Data Port is {dataPort}.")
                 recvData = ('LPRT 4,4,%s,%s,%s\r\n' % (eth0IP.replace('.', ','), portNum, ','.join(ports))).encode()
                 if socketKey in dataPool['ACTV']:
                     dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
@@ -232,7 +249,8 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
                 _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 e, f = int(e.strip()), int(f.strip())
                 dataPort = e * 256 + f
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+                      f"is Passive Mode. Server Data Port is {dataPort}.")
                 if socketKey in dataPool['PASV']:
                     dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
                 else:
@@ -248,7 +266,8 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
             elif recvData[:3] == b'228':
                 _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
                 dataPort = int(port.strip())
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+                      f"is Passive Mode. Server Data Port is {dataPort}.")
                 if socketKey in dataPool['PASV']:
                     dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
                 else:
@@ -264,7 +283,8 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
             elif recvData[:3] == b'229':
                 port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
                 dataPort = int(port)
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} is Passive Mode. Server Data Port is {dataPort}.")
+                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+                      f"is Passive Mode. Server Data Port is {dataPort}.")
                 if socketKey in dataPool['PASV']:
                     dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
                 else:
@@ -361,37 +381,30 @@ def main():
             print(f'Usage {sys.argv[0]} -p port')
             sys.exit(-1)
 
-    manager = multiprocessing.Manager()
-    global LOCK
-    LOCK = multiprocessing.Lock()
-    dataPool = dict()
-    dataPool['PASV'] = manager.dict()
-    dataPool['ACTV'] = manager.dict()
-    tcpSocket = tcp_listen(port)
-    print(f'listening on {sys.argv[2]}')
-    try:
-        while True:
-            # accept a new connection
-            try:
-                newConn, requesterAddress = tcpSocket.accept()
-            except (socket.error, socket.gaierror, socket.herror):
-                print("Failed to accept a connection.")
-                traceback.print_exc()
-                continue
-            sockAddr = newConn.getsockopt(socket.SOL_IP, SO_ORIGINAL_DST, 16)
-            responderPort, responderIp = struct.unpack("!2xH4s8x", sockAddr)
-            responderIp = socket.inet_ntoa(responderIp)
-            responderAddress = (responderIp, responderPort)
-            multiprocessing.Process(target=Connectionthread,
-                                    args=(newConn, requesterAddress, responderAddress, dataPool)).start()
-    except KeyboardInterrupt:
-        print("Stop!")
-    manager.shutdown()
+    with multiprocessing.Manager() as manager:
+        dataPool = dict()
+        dataPool['PASV'] = manager.dict()
+        dataPool['ACTV'] = manager.dict()
+        tcpSocket = tcp_listen(port)
+        print(f'listening on {sys.argv[2]}')
+        try:
+            while True:
+                # accept a new connection
+                try:
+                    newConn, requesterAddress = tcpSocket.accept()
+                except (socket.error, socket.gaierror, socket.herror):
+                    print("Failed to accept a connection.")
+                    traceback.print_exc()
+                    continue
+                sockAddr = newConn.getsockopt(socket.SOL_IP, SO_ORIGINAL_DST, 16)
+                responderPort, responderIp = struct.unpack("!2xH4s8x", sockAddr)
+                responderIp = socket.inet_ntoa(responderIp)
+                responderAddress = (responderIp, responderPort)
+                multiprocessing.Process(target=Connectionthread,
+                                        args=(newConn, requesterAddress, responderAddress, dataPool)).start()
+        except KeyboardInterrupt:
+            print("Stop!")
 
 
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.connect(("8.8.8.8", 80))
-eth0IP = s.getsockname()[0]
-s.close()
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

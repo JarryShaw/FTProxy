@@ -38,4 +38,5 @@
     "python.linting.pep8Args": [
         "--max-line-length=200"
     ],
+    "restructuredtext.confPath": "${workspaceFolder}/docs/conf.py",
 }

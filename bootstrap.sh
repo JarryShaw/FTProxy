@@ -44,3 +44,6 @@ fi
 
 # prepare Pipenv
 pipenv install
+
+# setup networking
+bash iptables_setup.py
