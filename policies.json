@@ -1,0 +1,17 @@
+{
+  "clientBlacklist": [
+    "192.168.33.11"
+  ],
+  "serverBlacklist": [
+    "202.120.2.1"
+  ],
+  "userBlacklist": [
+    "woodswang"
+  ],
+  "storPolicy": 1,
+  "retrPolicy": 1,
+  "sizeLimit": 1048576,
+  "fileBlacklist": [],
+  "extendBlacklist": [],
+  "pathBlacklist": []
+}

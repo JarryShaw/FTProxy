@@ -6,7 +6,7 @@ iptables -X
 iptables -Z
 
 # 设置默认规则
-iptables -P INPUT DROP
+iptables -P INPUT ACCEPT
 iptables -P OUTPUT ACCEPT
 iptables -P FORWARD DROP
 

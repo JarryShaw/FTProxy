@@ -19,20 +19,222 @@ LOCK = multiprocessing.Lock()
 SO_ORIGINAL_DST = 80
 MAX_LENGTH = 4096
 
-with open('clientBlacklist.json', 'r') as f:
-    clientBlackList = json.load(f)
+with open('policies.json', 'r') as f:
+    policies = json.load(f)
+    clientBlackList = policies['clientBlackList']
     print(clientBlackList)
-with open('serverBlacklist.json', 'r') as f:
-    serverBlackList = json.load(f)
+    serverBlackList = policies['serverBlackList']
     print(serverBlackList)
-with open('userBlacklist.json', 'r') as f:
-    userBlackList = json.load(f)
+    userBlackList = policies['userBlackList']
     print(userBlackList)
+    storPolicy = policies['storPolicy']
+    print(storPolicy)
+    retrPolicy = policies['retrPolicy']
+    print(retrPolicy)
+    sizeLimit = policies['sizeLimit']
+    print(sizeLimit)
+    fileBlacklist = policies['fileBlacklist']
+    print(fileBlacklist)
+    extendBlacklist = policies['extendBlacklist']
+    print(extendBlacklist)
+    pathBlacklist = policies['pathBlacklist']
+    print(pathBlacklist)
 
 # get local IP
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
     s.connect(("8.8.8.8", 80))
     eth0IP = s.getsockname()[0]
+
+
+def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
+    dropFlag = False
+    if b'USER' in recvData:
+        user = recvData.decode().split(' ')[-1].strip()
+        if user in userBlackList:
+            recvData = f"User {user!r} has been blocked.\r\n"
+            print(recvData)
+            requesterConn.sendall(recvData.encode())
+            writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData.encode())
+            return True, sizeFlag
+    elif b'SIZE' in recvData:
+        sizeFlag = True
+    elif b'CWD' in recvData:
+        directory = recvData[4:-2].decode()
+        if directory in pathBlacklist:
+            writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+            recvData = f"Directory {directory!r} is not accessible.\r\n"
+            print(recvData)
+            requesterConn.sendall(recvData.encode())
+            writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
+            return True, sizeFlag
+    elif b'RETR' in recvData:
+        if not retrPolicy:
+            writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+            recvData = f"Upload is not allowed.\r\n"
+            print(recvData)
+            requesterConn.sendall(recvData.encode())
+            writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
+            return True, sizeFlag
+        filePath = recvData[5:-2].decode()
+        filePath = pathlib.Path(filePath)
+        name = filePath.name
+        extend = filePath.suffix
+        if name in fileBlacklist:
+            writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+            recvData = f"File {name!r} is blocked.\r\n"
+            print(recvData)
+            requesterConn.sendall(recvData.encode())
+            writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
+            return True, sizeFlag
+        if extend in extendBlacklist:
+            writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+            recvData = f"File extension {extend!r} is blocked.\r\n"
+            print(recvData)
+            requesterConn.sendall(recvData.encode())
+            writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
+            return True, sizeFlag
+    elif b'STOR' in recvData:
+        if not storPolicy:
+            writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
+            recvData = f"Download is not allowed.\r\n"
+            print(recvData)
+            requesterConn.sendall(recvData.encode())
+            writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
+            return True, sizeFlag
+    return dropFlag, sizeFlag
+
+
+def activeModePort(recvData, socketKey, socketPort, dataPool, timestamp):
+    if recvData[:4] == b'PORT':
+        _, _, _, _, e, f = recvData[4:].split(b',')
+        e, f = int(e.strip()), int(f.strip())
+        dataPort = e * 256 + f
+        print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+              f"is Active Mode. Client Data Port is {dataPort}.")
+        recvData = ('PORT %s,%d,%d\r\n' % (eth0IP.replace('.', ','), e, f)).encode()
+        if socketKey in dataPool['ACTV']:
+            dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
+        else:
+            dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
+        # for j, item in enumerate(dataPool['ACTV'][socketKey]):
+        #     if item[0] == timestamp:
+        #         tmp = dataPool['ACTV'][socketKey]
+        #         tmp[j][1] = dataPort
+        #         dataPool['ACTV'][socketKey] = tmp
+        #         print(dict(dataPool['ACTV']))
+        #         break
+        print(dict(dataPool['ACTV']))
+    elif recvData[:4] == b'EPRT':
+        port = recvData.split(b'|')[-2]
+        dataPort = int(port)
+        print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+              f"is Active Mode. Client Data Port is {dataPort}.")
+        recvData = ('EPRT |1|%s|%d|\r\n' % (eth0IP, port)).encode()
+        if socketKey in dataPool['ACTV']:
+            dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
+        else:
+            dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
+        # for j, item in enumerate(dataPool['ACTV'][socketKey]):
+        #     if item[0] == timestamp:
+        #         tmp = dataPool['ACTV'][socketKey]
+        #         tmp[j][1] = dataPort
+        #         dataPool['ACTV'][socketKey] = tmp
+        #         print(dict(dataPool['ACTV']))
+        #         break
+        print(dict(dataPool['ACTV']))
+    elif recvData[:4] == b'LPRT':
+        address = recvData[4:].split(b',')
+        ipNum = int(address[1].strip())
+        portNum = address[1 + ipNum]
+        ports = address[(2 + ipNum):]
+        dataPort = 0
+        for i in ports:
+            dataPort = dataPort * 256 + int(i.strip())
+        print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+              f"is Active Mode. Client Data Port is {dataPort}.")
+        recvData = ('LPRT 4,4,%s,%s,%s\r\n' % (eth0IP.replace('.', ','), portNum, ','.join(ports))).encode()
+        if socketKey in dataPool['ACTV']:
+            dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
+        else:
+            dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
+        # for j, item in enumerate(dataPool['ACTV'][socketKey]):
+        #     if item[0] == timestamp:
+        #         tmp = dataPool['ACTV'][socketKey]
+        #         tmp[j][1] = dataPort
+        #         dataPool['ACTV'][socketKey] = tmp
+        #         print(dict(dataPool['ACTV']))
+        #         break
+        print(dict(dataPool['ACTV']))
+
+
+def validateReceiver(recvData, requesterConn, fileName, socketPort, sizeFlag):
+    dropFlag = False
+    if recvData[:3] == b'213':
+        if sizeFlag:
+            sizeFlag = False
+            size = eval(recvData[4:-2].decode())
+            if size >= sizeLimit:
+                writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData)
+                recvData = f"File is bigger than {sizeLimit} bytes.\r\n"
+                print(recvData)
+                requesterConn.sendall(recvData.encode())
+                return True, sizeFlag
+    return dropFlag, sizeFlag
+
+
+def passiveModePort(recvData, socketKey, socketPort, dataPool, timestamp):
+    if recvData[:3] == b'227':
+        _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
+        e, f = int(e.strip()), int(f.strip())
+        dataPort = e * 256 + f
+        print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+              f"is Passive Mode. Server Data Port is {dataPort}.")
+        if socketKey in dataPool['PASV']:
+            dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
+        else:
+            dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
+        # for j, item in enumerate(dataPool['PASV'][socketKey]):
+        #     if item[0] == timestamp:
+        #         tmp = dataPool['PASV'][socketKey]
+        #         tmp[j][1] = dataPort
+        #         dataPool['PASV'][socketKey] = tmp
+        #         print(dict(dataPool['PASV']))
+        #         break
+        # print(dict(dataPool['PASV']))
+    elif recvData[:3] == b'228':
+        _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
+        dataPort = int(port.strip())
+        print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+              f"is Passive Mode. Server Data Port is {dataPort}.")
+        if socketKey in dataPool['PASV']:
+            dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
+        else:
+            dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
+        # for j, item in enumerate(dataPool['PASV'][socketKey]):
+        #     if item[0] == timestamp:
+        #         tmp = dataPool['PASV'][socketKey]
+        #         tmp[j][1] = dataPort
+        #         dataPool['PASV'][socketKey] = tmp
+        #         print(dict(dataPool['PASV']))
+        #         break
+        # print(dict(dataPool['PASV']))
+    elif recvData[:3] == b'229':
+        port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
+        dataPort = int(port)
+        print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
+              f"is Passive Mode. Server Data Port is {dataPort}.")
+        if socketKey in dataPool['PASV']:
+            dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
+        else:
+            dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
+        # for j, item in enumerate(dataPool['PASV'][socketKey]):
+        #     if item[0] == timestamp:
+        #         tmp = dataPool['PASV'][socketKey]
+        #         tmp[j][1] = dataPort
+        #         dataPool['PASV'][socketKey] = tmp
+        #         print(dict(dataPool['PASV']))
+        #         break
+        # print(dict(dataPool['PASV']))
 
 
 def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool):
@@ -66,8 +268,8 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
             dataPool['PASV'][socketKey] = []
         if socketKey not in dataPool['ACTV']:
             dataPool['ACTV'][socketKey] = []
-        print(dict(dataPool['PASV']))
-        print(dict(dataPool['ACTV']))
+        # print(dict(dataPool['PASV']))
+        # print(dict(dataPool['ACTV']))
         # if socketKey in dataPool['PASV']:
         #     dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey].append([timestamp, None])
         # else:
@@ -88,7 +290,7 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
         print(f"Check if the connection from {requesterAddress} to {responderAddress} is an active mode data transfer")
         for _ in range(10):
             # print(dict(dataPool['PASV']))
-            print(dict(dataPool['ACTV']))
+            # print(dict(dataPool['ACTV']))
             # if socketKey in dataPool['PASV']:
             #     for j, item in enumerate(dataPool['PASV'][socketKey]):
             #         if item[1] == serverAddress[1]:
@@ -122,7 +324,7 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
     else:
         print(f"Check if the connection from {requesterAddress} to {responderAddress} is a passive mode data transfer")
         for _ in range(10):
-            print(dict(dataPool['PASV']))
+            # print(dict(dataPool['PASV']))
             # print(dict(dataPool['ACTV']))
             if socketKey in dataPool['PASV']:
                 for j, item in enumerate(dataPool['PASV'][socketKey]):
@@ -165,6 +367,7 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
 
 
 def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, timestamp, dataPool):
+    sizeFlag = False
     readfd = [requesterConn, responderConn]
     fileName = f"./record/{socketKey[0]}_{socketKey[1]}_{timestamp}.ftcap"
     writer.write_header(fileName, socketKey[0], socketKey[1], timestamp)
@@ -172,131 +375,19 @@ def TCP_Control_Trans(requesterConn, responderConn, socketKey, socketPort, times
         rfd, _, _ = select.select(readfd, [], [])
         if requesterConn in rfd:
             recvData = requesterConn.recv(MAX_LENGTH)
-            if b'USER' in recvData:
-                user = recvData.decode().split(' ')[-1].strip()
-                if user in userBlackList:
-                    recvData = f"User {user} has been blocked.\r\n"
-                    print(recvData)
-                    requesterConn.sendall(recvData.encode())
-                    writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData.encode())
-                    return
-            if recvData[:4] == b'PORT':
-                _, _, _, _, e, f = recvData[4:].split(b',')
-                e, f = int(e.strip()), int(f.strip())
-                dataPort = e * 256 + f
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
-                      f"is Active Mode. Client Data Port is {dataPort}.")
-                recvData = ('PORT %s,%d,%d\r\n' % (eth0IP.replace('.', ','), e, f)).encode()
-                if socketKey in dataPool['ACTV']:
-                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
-                else:
-                    dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
-                # for j, item in enumerate(dataPool['ACTV'][socketKey]):
-                #     if item[0] == timestamp:
-                #         tmp = dataPool['ACTV'][socketKey]
-                #         tmp[j][1] = dataPort
-                #         dataPool['ACTV'][socketKey] = tmp
-                #         print(dict(dataPool['ACTV']))
-                #         break
-                print(dict(dataPool['ACTV']))
-            elif recvData[:4] == b'EPRT':
-                port = recvData.split(b'|')[-2]
-                dataPort = int(port)
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
-                      f"is Active Mode. Client Data Port is {dataPort}.")
-                recvData = ('EPRT |1|%s|%d|\r\n' % (eth0IP, port)).encode()
-                if socketKey in dataPool['ACTV']:
-                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
-                else:
-                    dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
-                # for j, item in enumerate(dataPool['ACTV'][socketKey]):
-                #     if item[0] == timestamp:
-                #         tmp = dataPool['ACTV'][socketKey]
-                #         tmp[j][1] = dataPort
-                #         dataPool['ACTV'][socketKey] = tmp
-                #         print(dict(dataPool['ACTV']))
-                #         break
-                print(dict(dataPool['ACTV']))
-            elif recvData[:4] == b'LPRT':
-                address = recvData[4:].split(b',')
-                ipNum = int(address[1].strip())
-                portNum = address[1+ipNum]
-                ports = address[(2+ipNum):]
-                dataPort = 0
-                for i in ports:
-                    dataPort = dataPort * 256 + int(i.strip())
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
-                      f"is Active Mode. Client Data Port is {dataPort}.")
-                recvData = ('LPRT 4,4,%s,%s,%s\r\n' % (eth0IP.replace('.', ','), portNum, ','.join(ports))).encode()
-                if socketKey in dataPool['ACTV']:
-                    dataPool['ACTV'][socketKey] = dataPool['ACTV'][socketKey] + [[timestamp, dataPort]]
-                else:
-                    dataPool['ACTV'][socketKey] = [[timestamp, dataPort]]
-                # for j, item in enumerate(dataPool['ACTV'][socketKey]):
-                #     if item[0] == timestamp:
-                #         tmp = dataPool['ACTV'][socketKey]
-                #         tmp[j][1] = dataPort
-                #         dataPool['ACTV'][socketKey] = tmp
-                #         print(dict(dataPool['ACTV']))
-                #         break
-                print(dict(dataPool['ACTV']))
+            dropFlag, sizeFlag = validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag)
+            if dropFlag:
+                return
+            activeModePort(recvData, socketKey, socketPort, dataPool, timestamp)
             if recvData:
                 responderConn.sendall(recvData)
                 writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
         if responderConn in rfd:
             recvData = responderConn.recv(MAX_LENGTH)
-            if recvData[:3] == b'227':
-                _, _, _, _, e, f = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
-                e, f = int(e.strip()), int(f.strip())
-                dataPort = e * 256 + f
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
-                      f"is Passive Mode. Server Data Port is {dataPort}.")
-                if socketKey in dataPool['PASV']:
-                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
-                else:
-                    dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
-                # for j, item in enumerate(dataPool['PASV'][socketKey]):
-                #     if item[0] == timestamp:
-                #         tmp = dataPool['PASV'][socketKey]
-                #         tmp[j][1] = dataPort
-                #         dataPool['PASV'][socketKey] = tmp
-                #         print(dict(dataPool['PASV']))
-                #         break
-                print(dict(dataPool['PASV']))
-            elif recvData[:3] == b'228':
-                _, port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).split(b',')
-                dataPort = int(port.strip())
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
-                      f"is Passive Mode. Server Data Port is {dataPort}.")
-                if socketKey in dataPool['PASV']:
-                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
-                else:
-                    dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
-                # for j, item in enumerate(dataPool['PASV'][socketKey]):
-                #     if item[0] == timestamp:
-                #         tmp = dataPool['PASV'][socketKey]
-                #         tmp[j][1] = dataPort
-                #         dataPool['PASV'][socketKey] = tmp
-                #         print(dict(dataPool['PASV']))
-                #         break
-                print(dict(dataPool['PASV']))
-            elif recvData[:3] == b'229':
-                port = re.sub(rb'.*\((.*)\).*', rb'\1', recvData).strip(b'|')
-                dataPort = int(port)
-                print(f"Connection from {socketKey[0]}:{socketPort[0]} to {socketKey[1]}:{socketPort[1]} "
-                      f"is Passive Mode. Server Data Port is {dataPort}.")
-                if socketKey in dataPool['PASV']:
-                    dataPool['PASV'][socketKey] = dataPool['PASV'][socketKey] + [[timestamp, dataPort]]
-                else:
-                    dataPool['PASV'][socketKey] = [[timestamp, dataPort]]
-                # for j, item in enumerate(dataPool['PASV'][socketKey]):
-                #     if item[0] == timestamp:
-                #         tmp = dataPool['PASV'][socketKey]
-                #         tmp[j][1] = dataPort
-                #         dataPool['PASV'][socketKey] = tmp
-                #         print(dict(dataPool['PASV']))
-                #         break
-                print(dict(dataPool['PASV']))
+            dropFlag, sizeFlag = validateReceiver(recvData, requesterConn, fileName, socketPort, sizeFlag)
+            if dropFlag:
+                return 
+            passiveModePort(recvData, socketKey, socketPort, dataPool, timestamp)
             if recvData:
                 requesterConn.sendall(recvData)
                 writer.async_write(LOCK, fileName, True, socketPort[1], socketPort[0], recvData)
