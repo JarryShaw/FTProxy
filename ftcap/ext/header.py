@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import io
 import ipaddress
 
 import pcapkit
@@ -22,7 +23,7 @@ class Header(pcapkit.protocols.protocol.Protocol):
     @property
     def length(self):
         """Header length of corresponding protocol."""
-        return self._length
+        return len(self)
 
     @property
     def payload(self):
@@ -59,29 +60,33 @@ class Header(pcapkit.protocols.protocol.Protocol):
         _version_client = int(_version[:4], base=2)
         _version_server = int(_version[4:], base=2)
 
-        self._length = 9
+        _length = 9
         if _version_client == 4:
-            self._length += 4
+            _length += 4
             _client = ipaddress.ip_address(self._read_fileng(4))
         elif _version_client == 6:
-            self._length += 16
+            _length += 16
             _client = ipaddress.ip_address(self._read_fileng(16))
         else:
             raise pcapkit.utilities.exceptions.ProtocolError('FTP: invalid version')
 
         if _version_server == 4:
-            self._length += 4
+            _length += 4
             _server = ipaddress.ip_address(self._read_fileng(4))
         elif _version_server == 6:
-            self._length += 16
+            _length += 16
             _server = ipaddress.ip_address(self._read_fileng(16))
         else:
             raise pcapkit.utilities.exceptions.ProtocolError('FTP: invalid version')
+
+        _packet = self._read_packet(_length)
+        self._file = io.BytesIO(_packet)
 
         header = dict(
             time=datetime.datetime.fromtimestamp(_ts_sec + _ts_usec / 1_000_000),
             client=_client,
             server=_server,
+            packet=_packet,
         )
 
         return header
@@ -93,9 +98,6 @@ class Header(pcapkit.protocols.protocol.Protocol):
     def __init__(self, file, **kwargs):
         self._file = file
         self._info = pcapkit.corekit.infoclass.Info(self.read_header())
-
-    def __len__(self):
-        return self._length
 
     def __length_hint__(self):
         pass
