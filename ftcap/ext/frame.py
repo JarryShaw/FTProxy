@@ -2,6 +2,7 @@
 
 import collections
 import datetime
+import io
 
 import pcapkit
 
@@ -51,12 +52,15 @@ class Frame(pcapkit.protocols.protocol.Protocol):
         _src = address(ip=_srcip, port=_srcport)
         _dst = address(ip=_dstip, port=_dstport)
 
+        _pkt = self._read_fileng(_length)
+        self._file = io.BytesIO(_pkt)
+
         frame = dict(
             time=datetime.datetime.fromtimestamp(_ts_sec + _ts_usec / 1_000_000),
             src=_src,
             dst=_dst,
+            packet=_pkt,
         )
-        self._length = 14 + _length
 
         return self._decode_next_layer(frame, None, _length)
 
@@ -71,9 +75,6 @@ class Frame(pcapkit.protocols.protocol.Protocol):
 
         self._file = file
         self._info = pcapkit.corekit.infoclass.Info(self.read_frame())
-
-    def __len__(self):
-        return self._length
 
     def __length_hint__(self):
         return 14
