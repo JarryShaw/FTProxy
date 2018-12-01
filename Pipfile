@@ -16,4 +16,4 @@ pycodestyle = "*"
 isort = {extras = ["pipfile", "requirements"],version = "*"}
 
 [requires]
-python_version = "3.7"
+python_version = "3.6"
