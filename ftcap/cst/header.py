@@ -9,7 +9,33 @@ __all__ = ['Header']
 
 
 class Header(pcapkit.ipsuite.protocol.Protocol):
+    """FTCAP global header constructor.
 
+    ====== ======= ===================== =========================
+    Octets Bits    Name                  Description
+    ====== ======= ===================== =========================
+    0      0       timestamp.second      timestamp seconds
+    4      32      timestamp.microsecond timestamp microseconds
+    8      64      version.client        client IP address version
+    8      68      version.server        server IP address version
+    9      72      client                client IP address
+    13/25  104/200 server                server IP address
+    ====== ======= ===================== =========================
+
+    Properties:
+        * name -- str, name of corresponding protocol
+        * info -- Info, info dict of current instance
+        * data -- bytes, binary packet data if current instance
+        * alias -- str, acronym of corresponding protocol
+
+    Methods:
+        * index -- return first index of value from a dict
+        * pack -- pack integers to bytes
+
+    Utilities:
+        * __make__ -- make packet data
+
+    """
     ##########################################################################
     # Properties.
     ##########################################################################
@@ -36,10 +62,10 @@ class Header(pcapkit.ipsuite.protocol.Protocol):
             """Make version and address."""
             address = ipaddress.ip_address(self.__args__[key])
             version = address.version
-            if version == 4:
+            if version == 4:    # IPv4 address
                 verbit = '0100'
                 packed = ipaddress.v4_int_to_packed(int(address))
-            elif version == 6:
+            elif version == 6:  # IPv6 address
                 verbit = '0110'
                 packed = ipaddress.v6_int_to_packed(int(address))
             else:
@@ -47,10 +73,10 @@ class Header(pcapkit.ipsuite.protocol.Protocol):
             return (verbit, packed)
 
         # fetch values
-        ts_sec, ts_usec = __make_timestamp__()
-        ver_cli, client = __make_address__('client')
-        ver_src, server = __make_address__('server')
-        version = int(f'{ver_cli}{ver_src}', base=2)
+        ts_sec, ts_usec = __make_timestamp__()                          # make timestamp
+        ver_cli, client = __make_address__('client')                    # make client IP address
+        ver_src, server = __make_address__('server')                    # make server IP address
+        version = int(f'{ver_cli}{ver_src}', base=2)                    # make version byte
 
         # make packet
         return b'%s%s%s%s%s' % (

@@ -25,6 +25,7 @@
         "ntoa",
         "proto",
         "protochain",
+        "protos",
         "pypacker",
         "readfd",
         "retr",
