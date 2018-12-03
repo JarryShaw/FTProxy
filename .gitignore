@@ -4,8 +4,8 @@ record/
 *.ftcap
 Pipfile.lock
 
-# Created by https://www.gitignore.io/api/python,pycharm+all,visualstudiocode,macos,windows,linux,c
-# Edit at https://www.gitignore.io/?templates=python,pycharm+all,visualstudiocode,macos,windows,linux,c
+# Created by https://www.gitignore.io/api/python,pycharm,visualstudiocode,macos,windows,linux,c
+# Edit at https://www.gitignore.io/?templates=python,pycharm,visualstudiocode,macos,windows,linux,c
 
 ### C ###
 # Prerequisites
@@ -104,7 +104,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-### PyCharm+all ###
+### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
@@ -172,18 +172,16 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
-### PyCharm+all Patch ###
-# Ignores the whole .idea folder and all .iml files
-# See https://github.com/joeblau/gitignore.io/issues/186 and https://github.com/joeblau/gitignore.io/issues/360
+### PyCharm Patch ###
+# Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
 
-.idea/
+# *.iml
+# modules.xml
+# .idea/misc.xml
+# *.ipr
 
-# Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-249601023
-
-*.iml
-modules.xml
-.idea/misc.xml
-*.ipr
+# Sonarlint plugin
+.idea/sonarlint
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -207,6 +205,7 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -303,18 +302,6 @@ dmypy.json
 ### Python Patch ###
 .venv/
 
-### Python.VirtualEnv Stack ###
-# Virtualenv
-# http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
-[Bb]in
-[Ii]nclude
-[Ll]ib
-[Ll]ib64
-[Ll]ocal
-[Ss]cripts
-pyvenv.cfg
-pip-selfcheck.json
-
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
@@ -351,4 +338,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.gitignore.io/api/python,pycharm+all,visualstudiocode,macos,windows,linux,c
+# End of https://www.gitignore.io/api/python,pycharm,visualstudiocode,macos,windows,linux,c

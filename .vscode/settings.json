@@ -27,9 +27,12 @@
         "protochain",
         "pypacker",
         "readfd",
+        "retr",
         "servfd",
+        "setup",
         "srcip",
         "srcport",
+        "stor",
         "usec",
         "vbytes",
         "verbit"
