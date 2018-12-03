@@ -1,13 +1,11 @@
 bootstrap.sh
-clientBlacklist.json
 iptables_reset.sh
 iptables_setup.sh
 mainGUI.py
 Pipfile
+policies.json
 README.md
-serverBlacklist.json
 tc-proxy.py
-userBlacklist.json
 ftcap/__init__.py
 ftcap/reader.py
 ftcap/README.rst
