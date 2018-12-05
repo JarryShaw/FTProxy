@@ -36,7 +36,6 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
         if user in policy['userBlacklist']:
             recvData = f"User {user!r} has been blocked.\r\n"
             print(recvData)
-            requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData.encode())
             return True, sizeFlag
     # Client checking file size
@@ -51,7 +50,6 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
             recvData = f"Directory {directory!r} is not accessible.\r\n"
             print(recvData)
-            requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
             return True, sizeFlag
     # Client download file
@@ -61,7 +59,6 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
             recvData = f"Download is not allowed.\r\n"
             print(recvData)
-            requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
             return True, sizeFlag
         filePath = recvData[5:-2].decode()
@@ -72,14 +69,12 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
             recvData = f"File {name!r} is blocked.\r\n"
             print(recvData)
-            requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
             return True, sizeFlag
         if extend in policy['extensionBlacklist']:
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
             recvData = f"File extension {extend!r} is blocked.\r\n"
             print(recvData)
-            requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
             return True, sizeFlag
     # Client upload file
@@ -88,7 +83,6 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
             recvData = f"Upload is not allowed.\r\n"
             print(recvData)
-            requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
             return True, sizeFlag
     return dropFlag, sizeFlag
