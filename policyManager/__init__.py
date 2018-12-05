@@ -11,4 +11,4 @@ def reader():
 # Save policy in policies.json
 def writer(policy):
     with open('policies.json', 'w') as f:
-        json.dump(policy, f)
+        json.dump(policy, f, indent=2)

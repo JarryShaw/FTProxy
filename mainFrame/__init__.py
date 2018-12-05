@@ -250,12 +250,18 @@ class mainFrame(wx.Frame):
             dlg.Destroy()
 
     def onApply(self, evt):
-        value = self.serverBlacklist.GetValue()
-        blacklist = []
-        for i in value.split('\n'):
-            blacklist.append(i)
-        with open('serverBlacklist.json', 'w') as f:
-            json.dump(blacklist, f)
+        policy = {
+            "serverBlacklist": self.serverBlacklist.GetValue().split('\n'),
+            "clientBlacklist": self.clientBlacklist.GetValue().split('\n'),
+            "userBlacklist": self.userBlacklist.GetValue().split('\n'),
+            "fileBlacklist": self.fileBlacklist.GetValue().split('\n'),
+            "extensionBlacklist": self.extensionBlacklist.GetValue().split('\n'),
+            "pathBlacklist": self.pathBlacklist.GetValue().split('\n'),
+            "sizeLimit": self.sizeLimit.GetValue(),
+            "retrPolicy": self.retrPolicy.GetValue(),
+            "storPolicy": self.storPolicy.GetValue()
+        }
+        policyManager.writer(policy)
 
 
 class Firewall(wx.App):
