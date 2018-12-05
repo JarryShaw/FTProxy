@@ -59,7 +59,7 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
         # RETR file
         if policy['retrPolicy']:
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
-            recvData = f"Upload is not allowed.\r\n"
+            recvData = f"Download is not allowed.\r\n"
             print(recvData)
             requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
@@ -75,7 +75,7 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
             requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
             return True, sizeFlag
-        if extend in policy['extendBlacklist']:
+        if extend in policy['extensionBlacklist']:
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
             recvData = f"File extension {extend!r} is blocked.\r\n"
             print(recvData)
@@ -86,7 +86,7 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
     elif b'STOR' in recvData:
         if policy['storPolicy']:
             writer.async_write(LOCK, fileName, False, socketPort[0], socketPort[1], recvData)
-            recvData = f"Download is not allowed.\r\n"
+            recvData = f"Upload is not allowed.\r\n"
             print(recvData)
             requesterConn.sendall(recvData.encode())
             writer.async_write(LOCK, fileName, False, socketPort[1], socketPort[0], recvData.encode())
