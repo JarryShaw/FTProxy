@@ -10,8 +10,8 @@
   ],
   "storPolicy": 1,
   "retrPolicy": 1,
-  "sizeLimit": 1048576,
+  "sizeLimit": "1048576",
   "fileBlacklist": [],
-  "extendBlacklist": [],
+  "extensionBlacklist": [],
   "pathBlacklist": []
 }

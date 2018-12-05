@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import json
+import policyManager
 import os
-
 import ftcap
-
 import wx
 
 
 class mainFrame(wx.Frame):
-    def __init__(self, parent=None, id=-1, title="Transparent Proxy Manager", pos=(100, 100), size=(800, 600)):
+    def __init__(self, parent=None, id=-1, title="Transparent Proxy Manager", pos=(100, 100), size=(900, 600)):
+        # Initialize main frame
         wx.Frame.__init__(self, parent=parent, id=id, title=title, pos=pos, size=size)
-
+        # Initialize objects
         self.topSplitter = wx.SplitterWindow(parent=self, id=-1, style=wx.SP_3D)
         self.secondSplitter = wx.SplitterWindow(parent=self.topSplitter, id=-1, style=wx.SP_3D)
         self.thirdSplitter = wx.SplitterWindow(parent=self.secondSplitter, id=-1, style=wx.SP_3D)
@@ -28,55 +27,40 @@ class mainFrame(wx.Frame):
         self.clientBlacklist = wx.TextCtrl(parent=self.policyPanel, id=-1, style=wx.TE_MULTILINE)
         self.serverBlacklist = wx.TextCtrl(parent=self.policyPanel, id=-1, style=wx.TE_MULTILINE)
         self.userBlacklist = wx.TextCtrl(parent=self.policyPanel, id=-1, style=wx.TE_MULTILINE)
-        self.clientBlacklistApply = wx.Button(parent=self.policyPanel, id=-1, label="应用")
-        self.serverBlacklistApply = wx.Button(parent=self.policyPanel, id=-1, label="应用")
-        self.userBlacklistApply = wx.Button(parent=self.policyPanel, id=-1, label="应用")
+        self.fileBlacklist = wx.TextCtrl(parent=self.policyPanel, id=-1, style=wx.TE_MULTILINE)
+        self.extensionBlacklist = wx.TextCtrl(parent=self.policyPanel, id=-1, style=wx.TE_MULTILINE)
+        self.pathBlacklist = wx.TextCtrl(parent=self.policyPanel, id=-1, style=wx.TE_MULTILINE)
+        self.sizeLimit = wx.TextCtrl(parent=self.policyPanel, id=-1)
+        self.retrPolicy = wx.CheckBox(parent=self.policyPanel, id=-1, label="禁止下载")
+        self.storPolicy = wx.CheckBox(parent=self.policyPanel, id=-1, label="禁止上传")
+        self.policyApply = wx.Button(parent=self.policyPanel, id=-1, label="应用")
         self.clientInfo = wx.StaticText(parent=self.detailPanel, id=-1, label="客户端信息")
         self.serverInfo = wx.StaticText(parent=self.detailPanel, id=-1, label="服务器信息")
         self.username = wx.StaticText(parent=self.detailPanel, id=-1, label="用户名")
         self.password = wx.StaticText(parent=self.detailPanel, id=-1, label="密码")
         self.selectFile = wx.Choice(parent=self.buttonPanel, id=-1, choices=[])
         self.extractFile = wx.Button(parent=self.buttonPanel, id=-1, label="提取文件")
-
+        # Initialize session list, file list, and policy list
         self.sessions = []
         self.files = []
-
-        # self.menuBar = wx.MenuBar()
-        self.statusBar = self.CreateStatusBar()
-        self.toolBar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.TB_TEXT)
+        self.policy = None
+        # Initialize GUI
         self.initGUI()
 
     def initGUI(self):
-        # self.initMenuBar()
-        # self.initStatusBar()
-        # self.initToolBar()
+        # Set grid
         self.initPanel()
-
+        # Bind events
         self.Bind(wx.EVT_SIZE, self.onResize)
         self.refresh.Bind(wx.EVT_BUTTON, self.onRefresh)
         self.sessionList.Bind(wx.EVT_LISTBOX, self.onSelect)
         self.extractFile.Bind(wx.EVT_BUTTON, self.onExtractFile)
-        self.clientBlacklistApply.Bind(wx.EVT_BUTTON, self.onApplyClientBlacklist)
-        self.serverBlacklistApply.Bind(wx.EVT_BUTTON, self.onApplyServerBlacklist)
-        self.userBlacklistApply.Bind(wx.EVT_BUTTON, self.onApplyUserBlacklist)
-
+        self.policyApply.Bind(wx.EVT_BUTTON, self.onApply)
+        # Refresh panel
         self.onRefresh(None)
 
-    # def initMenuBar(self):
-    #     self.SetMenuBar(self.menuBar)
-    #     self.Bind(wx.EVT_MENU, self.barHandler, self.menuBar)
-
-    # def initStatusBar(self):
-    #     self.statusBar.SetFieldsCount(2)
-    #     self.statusBar.SetStatusWidths([1, 4])
-    #
-    #     self.SetStatusBar(self.statusBar)
-
-    # def initToolBar(self):
-    #     self.SetToolBar(self.toolBar)
-    #     self.Bind(wx.EVT_TOOL, self.barHandler, self.toolBar)
-
     def initPanel(self):
+        # Split window
         self.fourthSplitter.SplitVertically(self.detailPanel, self.buttonPanel, 100)
         self.fourthSplitter.SetSashGravity(0.5)
         self.thirdSplitter.SplitHorizontally(self.flowPanel, self.fourthSplitter, 250)
@@ -85,7 +69,7 @@ class mainFrame(wx.Frame):
         self.secondSplitter.SetSashGravity(0.5)
         self.topSplitter.SplitHorizontally(self.secondSplitter, self.policyPanel, 350)
         self.topSplitter.SetSashGravity(0.5)
-
+        # Setup session list
         listSizer = wx.GridBagSizer(0, 0)
         sessionListTitle = wx.StaticText(parent=self.listPanel, id=-1, label='对话列表', style=wx.ALIGN_CENTER)
         listSizer.Add(sessionListTitle, pos=(0, 0), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
@@ -94,7 +78,7 @@ class mainFrame(wx.Frame):
         listSizer.AddGrowableCol(0)
         listSizer.Add(self.refresh, pos=(2, 0), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
         self.listPanel.SetSizer(listSizer)
-
+        # Setup flow list
         flowSizer = wx.BoxSizer(wx.VERTICAL)
         flowListTitle = wx.StaticText(parent=self.flowPanel, id=-1, label='对话内容', style=wx.ALIGN_CENTER)
         flowSizer.Add(flowListTitle, proportion=0, flag=wx.EXPAND | wx.ALL, border=5)
@@ -106,22 +90,32 @@ class mainFrame(wx.Frame):
         self.flowList.InsertColumn(5, "Contents")
         flowSizer.Add(self.flowList, proportion=1, flag=wx.EXPAND | wx.ALL, border=5)
         self.flowPanel.SetSizer(flowSizer)
-
+        # Setup policy setting
         policyGridSizer = wx.GridBagSizer(0, 0)
         clientBlacklistTitle = wx.StaticText(parent=self.policyPanel, id=-1, label='客户端黑名单', style=wx.ALIGN_CENTER)
         policyGridSizer.Add(clientBlacklistTitle, pos=(0, 0), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
-        policyGridSizer.Add(self.clientBlacklistApply, pos=(0, 1), span=(1, 1), flag=wx.ALIGN_CENTER, border=5)
         serverBlacklistTitle = wx.StaticText(parent=self.policyPanel, id=-1, label='服务器黑名单', style=wx.ALIGN_CENTER)
-        policyGridSizer.Add(serverBlacklistTitle, pos=(0, 2), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
-        policyGridSizer.Add(self.serverBlacklistApply, pos=(0, 3), span=(1, 1), flag=wx.ALIGN_CENTER, border=5)
+        policyGridSizer.Add(serverBlacklistTitle, pos=(0, 1), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
         userBlacklistTitle = wx.StaticText(parent=self.policyPanel, id=-1, label='用户黑名单', style=wx.ALIGN_CENTER)
-        policyGridSizer.Add(userBlacklistTitle, pos=(0, 4), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
-        policyGridSizer.Add(self.userBlacklistApply, pos=(0, 5), span=(1, 1), flag=wx.ALIGN_CENTER, border=5)
-        policyGridSizer.Add(self.clientBlacklist, pos=(1, 0), span=(1, 2), flag=wx.EXPAND | wx.ALL, border=5)
-        policyGridSizer.Add(self.serverBlacklist, pos=(1, 2), span=(1, 2), flag=wx.EXPAND | wx.ALL, border=5)
-        policyGridSizer.Add(self.userBlacklist, pos=(1, 4), span=(1, 2), flag=wx.EXPAND | wx.ALL, border=5)
-        # policyGridSizer.AddMany([(clientBlacklistTitle, 0, wx.ALIGN_CENTER), (serverBlacklistTitle, 0, wx.ALIGN_CENTER), (userBlacklistTitle, 0, wx.ALIGN_CENTER),
-        #                          (self.clientBlacklist, 0, wx.EXPAND), (self.serverBlacklist, 0, wx.EXPAND), (self.userBlacklist, 0, wx.EXPAND)])
+        policyGridSizer.Add(userBlacklistTitle, pos=(0, 2), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        fileBlacklistTitle = wx.StaticText(parent=self.policyPanel, id=-1, label='文件黑名单', style=wx.ALIGN_CENTER)
+        policyGridSizer.Add(fileBlacklistTitle, pos=(0, 3), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        extensionBlacklistTitle = wx.StaticText(parent=self.policyPanel, id=-1, label='拓展名黑名单', style=wx.ALIGN_CENTER)
+        policyGridSizer.Add(extensionBlacklistTitle, pos=(0, 4), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        pathBlacklistTitle = wx.StaticText(parent=self.policyPanel, id=-1, label='路径黑名单', style=wx.ALIGN_CENTER)
+        policyGridSizer.Add(pathBlacklistTitle, pos=(0, 5), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        policyGridSizer.Add(self.clientBlacklist, pos=(1, 0), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        policyGridSizer.Add(self.serverBlacklist, pos=(1, 1), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        policyGridSizer.Add(self.userBlacklist, pos=(1, 2), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        policyGridSizer.Add(self.fileBlacklist, pos=(1, 3), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        policyGridSizer.Add(self.extensionBlacklist, pos=(1, 4), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        policyGridSizer.Add(self.pathBlacklist, pos=(1, 5), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
+        sizeLimitTitle = wx.StaticText(parent=self.policyPanel, id=-1, label='文件大小限制', style=wx.ALIGN_CENTER)
+        policyGridSizer.Add(sizeLimitTitle, pos=(2, 0), span=(1, 1), flag=wx.ALIGN_CENTER, border=5)
+        policyGridSizer.Add(self.sizeLimit, pos=(2, 1), span=(1, 2), flag=wx.EXPAND | wx.ALL, border=5)
+        policyGridSizer.Add(self.retrPolicy, pos=(2, 3), span=(1, 1), flag=wx.ALIGN_CENTER, border=5)
+        policyGridSizer.Add(self.storPolicy, pos=(2, 4), span=(1, 1), flag=wx.ALIGN_CENTER, border=5)
+        policyGridSizer.Add(self.policyApply, pos=(2, 5), span=(1, 1), flag=wx.ALIGN_CENTER, border=5)
         policyGridSizer.AddGrowableRow(1)
         policyGridSizer.AddGrowableCol(0)
         policyGridSizer.AddGrowableCol(1)
@@ -129,10 +123,8 @@ class mainFrame(wx.Frame):
         policyGridSizer.AddGrowableCol(3)
         policyGridSizer.AddGrowableCol(4)
         policyGridSizer.AddGrowableCol(5)
-        # policyBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
-        # policyBoxSizer.Add(policyGridSizer, proportion=1, flag=wx.ALL | wx.EXPAND, border=15)
         self.policyPanel.SetSizer(policyGridSizer)
-
+        # Setup detail panel
         sessionDetailGridSizer = wx.GridBagSizer(0, 0)
         clientInfoTitle = wx.StaticText(parent=self.detailPanel, id=-1, label='客户端信息', style=wx.ALIGN_CENTER)
         sessionDetailGridSizer.Add(clientInfoTitle, pos=(0, 0), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
@@ -151,7 +143,7 @@ class mainFrame(wx.Frame):
         sessionDetailGridSizer.AddGrowableRow(0)
         sessionDetailGridSizer.AddGrowableRow(1)
         self.detailPanel.SetSizer(sessionDetailGridSizer)
-
+        # Setup file downloading
         sessionFileGridSizer = wx.GridBagSizer(0, 0)
         sessionFileGridSizer.Add(self.selectFile, pos=(0, 0), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
         sessionFileGridSizer.Add(self.extractFile, pos=(1, 0), span=(1, 1), flag=wx.EXPAND | wx.ALL, border=5)
@@ -159,47 +151,39 @@ class mainFrame(wx.Frame):
         sessionFileGridSizer.AddGrowableRow(0)
         sessionFileGridSizer.AddGrowableRow(1)
         self.buttonPanel.SetSizer(sessionFileGridSizer)
-
-        with open('clientBlacklist.json', 'r') as f:
-            value = ''
-            blacklist = json.load(f)
-            for i in blacklist:
-                value += i + '\n'
-            self.clientBlacklist.SetValue(value)
-        with open('serverBlacklist.json', 'r') as f:
-            value = ''
-            blacklist = json.load(f)
-            for i in blacklist:
-                value += i + '\n'
-            self.serverBlacklist.SetValue(value)
-        with open('userBlacklist.json', 'r') as f:
-            value = ''
-            blacklist = json.load(f)
-            for i in blacklist:
-                value += i + '\n'
-            self.userBlacklist.SetValue(value)
-
-    def barHandler(self):
-        pass
+        # Set policy
+        self.policy = policyManager.reader()
+        self.clientBlacklist.SetValue('\n'.join(self.policy['clientBlacklist']))
+        self.serverBlacklist.SetValue('\n'.join(self.policy['serverBlacklist']))
+        self.userBlacklist.SetValue('\n'.join(self.policy['userBlacklist']))
+        self.fileBlacklist.SetValue('\n'.join(self.policy['fileBlacklist']))
+        self.extensionBlacklist.SetValue('\n'.join(self.policy['extensionBlacklist']))
+        self.pathBlacklist.SetValue('\n'.join(self.policy['pathBlacklist']))
+        self.sizeLimit.SetValue(self.policy['sizeLimit'])
+        self.retrPolicy.SetValue(self.policy['retrPolicy'])
+        self.storPolicy.SetValue(self.policy['storPolicy'])
 
     def onRefresh(self, evt):
+        # Called when main window click refresh button
         self.sessions = []
         fileList = ['./record/'+x for x in os.listdir('./record/')]
         for i in fileList:
             self.sessions.append(ftcap.reader(i))
-
+        # Reload session list
         self.sessionList.Clear()
         for i in self.sessions:
             self.sessionList.Append(i[0].info.time.ctime())
-
+        #Select first item in session list
         self.sessionList.SetSelection(0)
         self._selectSessionList(0)
 
     def onSelect(self, evt):
+        # Called when main window click item in session list
         selection = self.sessionList.GetSelection()
         self._selectSessionList(selection)
 
     def _selectSessionList(self, selection):
+        # Select selection+1 item in session list
         self.flowList.DeleteAllItems()
         print(str(self.sessions[selection][0].info.client), str(self.sessions[selection][0].info.server))
         self.clientInfo.SetLabel(str(self.sessions[selection][0].info.client))
@@ -265,28 +249,12 @@ class mainFrame(wx.Frame):
             dlg.ShowModal()
             dlg.Destroy()
 
-    def onApplyClientBlacklist(self, evt):
-        value = self.clientBlacklist.GetValue()
-        blacklist = []
-        for i in value.split('\n'):
-            blacklist.append(i)
-        with open('clientBlacklist.json', 'w') as f:
-            json.dump(blacklist, f)
-
-    def onApplyServerBlacklist(self, evt):
+    def onApply(self, evt):
         value = self.serverBlacklist.GetValue()
         blacklist = []
         for i in value.split('\n'):
             blacklist.append(i)
         with open('serverBlacklist.json', 'w') as f:
-            json.dump(blacklist, f)
-
-    def onApplyUserBlacklist(self, evt):
-        value = self.userBlacklist.GetValue()
-        blacklist = []
-        for i in value.split('\n'):
-            blacklist.append(i)
-        with open('userBlacklist.json', 'w') as f:
             json.dump(blacklist, f)
 
 
@@ -297,11 +265,6 @@ class Firewall(wx.App):
         self.frame.Centre()
         self.SetTopWindow(self.frame)
         return True
-
-# class SnifferThread(Thread):
-#     def __init__(self, Iface, Prn, StopFilter):
-#         Thread.__init__(self)
-#         self.sniffer = sniff(iface=Iface, prn=Prn, stop_filter=StopFilter)
 
 
 if __name__ == '__main__':
