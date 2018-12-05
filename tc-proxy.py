@@ -33,7 +33,7 @@ def validateRequester(recvData, requesterConn, fileName, socketPort, sizeFlag):
     if b'USER' in recvData:
         # USER username
         user = recvData.decode().split(' ')[-1].strip()
-        if user in policy['userBlackList']:
+        if user in policy['userBlacklist']:
             recvData = f"User {user!r} has been blocked.\r\n"
             print(recvData)
             requesterConn.sendall(recvData.encode())
@@ -376,12 +376,12 @@ def tcp_listen(port):
 
 def checkserver(serv_addr):
     # If server in blacklist
-    return serv_addr in policy['serverBlackList']
+    return serv_addr in policy['serverBlacklist']
 
 
 def checkclient(cki_addr):
     # If client in blacklist
-    return cki_addr in policy['clientBlackList']
+    return cki_addr in policy['clientBlacklist']
 
 
 def main():
