@@ -209,7 +209,10 @@ def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool
     socketPort = (localAddress[1], remoteAddress[1])
     # Connect to server
     print(f"Connecting to {responderAddress}.")
-    responderConn = Connect_Serv(responderAddress)
+    try:
+        responderConn = Connect_Serv(responderAddress)
+    except OSError:
+        return 
     print("Succeed")
     # If communicate with port 21, FTP control
     if responderAddress[1] == 21:
