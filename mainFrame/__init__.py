@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import policyManager
 import os
-import ftcap
+
 import wx
+
+import ftcap
+import policyManager
 
 
 class mainFrame(wx.Frame):

@@ -2,6 +2,7 @@
     "python.pythonPath": "/Users/jarryshaw/.local/share/virtualenvs/FTProxy-8yoelX7l/bin/python",
     "cSpell.words": [
         "ACTV",
+        "DGRAM",
         "EPRT",
         "INET",
         "IPPROTO",

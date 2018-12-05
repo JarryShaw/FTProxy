@@ -10,7 +10,7 @@
 
 ### Python dependencies
 
-- `PyPCAPKit` (version 0.12.10.post2)
+- `PyPCAPKit` (version 0.12.11)
 - `wxPython` (version 4.0.3)
 
 ## Project structure
@@ -20,7 +20,6 @@ FTProxy
 ├── Pipfile                             # pipenv description file
 ├── README.md
 ├── bootstrap.sh                        # use this file to set up environment
-├── clientBlacklist.json                # client blacklist record
 ├── ftcap                               # user-defined record file format
 │   ├── README.rst
 │   ├── __init__.py
@@ -37,7 +36,8 @@ FTProxy
 ├── mainFrame                           # GUI
 │   ├── __init__.py
 ├── mainGUI.py                          # entry point for GUI
-├── serverBlacklist.json                # sever blacklist record
-├── tc-proxy.py                         # entry point for FTProxy
-└── userBlacklist.json                  # user blacklist record
+├── policies.json                       # firewall policies
+├── policyManager
+│   └── __init__.py                     # policy utilities
+└── tc-proxy.py                         # entry point for FTProxy
 ```
