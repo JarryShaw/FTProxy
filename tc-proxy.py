@@ -2,7 +2,6 @@
 
 import getopt
 import ipaddress
-import policyManager
 import multiprocessing
 import pathlib
 import re
@@ -13,6 +12,7 @@ import sys
 import time
 import traceback
 
+import policyManager
 from ftcap import writer
 
 LOCK = multiprocessing.Lock()
@@ -194,7 +194,7 @@ def passiveModePort(recvData, socketKey, socketPort, dataPool, timestamp):
 
 
 def Connectionthread(requesterConn, requesterAddress, responderAddress, dataPool):
-    # Get local address and remotr address
+    # Get local address and remote address
     if ipaddress.ip_address(responderAddress[0]).is_private:
         localAddress, remoteAddress = responderAddress, requesterAddress
     else:
