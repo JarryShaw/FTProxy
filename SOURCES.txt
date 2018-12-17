@@ -4,7 +4,7 @@ iptables_setup.sh
 mainGUI.py
 Pipfile
 policies.json
-README.md
+README.rst
 tc-proxy.py
 ftcap/__init__.py
 ftcap/reader.py
